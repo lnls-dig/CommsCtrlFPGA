@@ -60,9 +60,9 @@ signal timeframe_val_i      : std_logic_vector(31 downto 0) := (others => '0');
 signal timestamp_val_i      : std_logic_vector(31 downto 0) := (others => '0');
 signal bpm_x_pos_i          : std_logic_2d_32(BPMS-1 downto 0);
 signal bpm_y_pos_i          : std_logic_2d_32(BPMS-1 downto 0);
-signal pos_datsel_i         : std_logic := '0';
+signal pos_datsel_i         : std_logic_vector(3 downto 0) := (others => '0');
 signal txf_full_i           : std_logic_vector(3 downto 0) := (others => '0');
-signal bpmid_i              : std_logic_vector(9 downto 0);
+signal bpmid_i              : std_logic_vector(8 downto 0);
 signal xy_buf_addr_i        : std_logic_vector(NodeW downto 0) := (others => '0');
 signal golden_orb_x_i       : std_logic_vector(31 downto 0) := (others => '0');
 signal golden_orb_y_i       : std_logic_vector(31 downto 0) := (others => '0');
@@ -106,7 +106,7 @@ sysclk_i <= not sysclk_i after 8 ns;
 mgtreset_i <= '0' after 100 ns;
 
 -- Static BPM ID
-bpmid_i <= std_logic_vector(to_unsigned(100,10));
+bpmid_i <= std_logic_vector(to_unsigned(100,9));
 
 bpm_x_pos_i(0) <= X"11111111";
 bpm_y_pos_i(0) <= X"10101010";
@@ -148,6 +148,7 @@ PORT MAP (
     xy_buf_dout_o        => xy_buf_dout_o,
     xy_buf_addr_i        => xy_buf_addr_i,
     xy_buf_rstb_i        => '0',
+    xy_buf_long_en_i     => '0',
     fodprocess_time_o    => fodprocess_time_o,
     bpm_count_o          => bpm_count_o,
     golden_orb_x_i       => golden_orb_x_i,
@@ -190,6 +191,7 @@ port map(
 
     tfs_bpm_i               => bpm_timeframe_start,
     tfs_pmc_i               => "0000",
+    tfs_override_i          => '0',
 
     timeframe_len_i         => X"2000",
     timeframe_start_o       => timeframe_start,
