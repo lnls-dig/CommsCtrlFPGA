@@ -5,7 +5,7 @@ vlib work
 #
 # Compile sources
 #
-vcom -explicit  -93 /dls_sw/apps/FPGA/Questa/10.1/questasim/examples/vhdl/io_utils/io_utils.vhd
+vcom -explicit  -93 "../bench/io_utils.vhd"
 vcom -explicit  -93 "../../../rtl/fofb_cc_pkg/rtl/vhdl/fofb_cc_version.vhd"
 vcom -explicit  -93 "../../../rtl/fofb_cc_sync/rtl/vhdl/fofb_cc_p2p.vhd"
 vcom -explicit  -93 "../../../rtl/fofb_cc_pkg/rtl/vhdl/fofb_cc_pkg.vhd"
