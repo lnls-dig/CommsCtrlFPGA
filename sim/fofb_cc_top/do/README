@@ -1,0 +1,8 @@
+Some notes:
+
+Communication Controller desing currently supports Virtex2Pro and Virtex5 FPGA
+devices. Xilinx ISE10.1 is the latest ISE version supporting Virtex2Pro
+devices. Therefore, a specific modelsim.ini is being used as saved in this
+directory.
+
+IMPORTANT : modelsim.ini is prepared using compxlib 10.1i and Questasim v6.6c

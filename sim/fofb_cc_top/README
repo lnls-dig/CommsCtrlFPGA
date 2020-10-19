@@ -1,0 +1,5 @@
+1./ To select test scenario, modify test_selector generic parameter in following file
+    bench/fofb_cc_top_tb.vhd
+
+2./ To add a new test scenario modify following file
+    bench/fofb_cc_usrapp_tx.vhd

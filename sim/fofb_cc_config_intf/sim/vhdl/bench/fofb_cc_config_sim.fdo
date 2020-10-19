@@ -1,0 +1,13 @@
+vlib work
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/rtl/fofb_cc_pkg/rtl/vhdl/fofb_cc_pkg.vhd"
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/rtl/fofb_cc_pkg/rtl/vhdl/fofb_cc_conf_pmc.vhd"
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/rtl/fofb_cc_user_defs/fofb_cc_user_defs.vhd"
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/rtl/fofb_cc_cfg_interface/rtl/vhdl/fofb_cc_config_intf.vhd"
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/rtl/fofb_cc_cfg_interface/rtl/vhdl/fofb_cc_cfg_bram.vhd"
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/rtl/fofb_cc_cfg_interface/rtl/vhdl/fofb_cc_cfg_coef_buf.vhd"
+vcom -explicit  -93 "/home/iu42/Libera/trunk/FPGA_EBPM/FastFeedbackFPGA/sim/fofb_cc_config_intf/sim/vhdl/bench/fofb_cc_config_intf_tb.vhd"
+vsim -t 1ps   -lib work fofb_cc_config_intf_tb
+view wave
+do {wave.do}
+run 5000 ms
+vdel -all -lib work
