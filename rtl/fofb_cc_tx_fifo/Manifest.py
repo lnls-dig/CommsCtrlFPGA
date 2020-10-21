@@ -15,4 +15,3 @@ elif (target == "xilinx" and syn_device[0:4].upper()=="XC7A"):
 else:
     import sys
     sys.exit("ERROR: fofb_cc_tx_fifo: Target/Device not supported: {}/{}".format(target, syn_device))
-
