@@ -50,7 +50,7 @@ port (
     gtprxn_in                               : in   std_logic;
     gtprxp_in                               : in   std_logic;
     ------------------- Receive Ports - RX Buffer Bypass Ports -----------------
-    rxbufstatus_out                         : out  std_logic_vector(2 downto 0);
+    rxbufstatus_out                         : out  std_logic;
     -------------- Receive Ports - RX Byte and Word Alignment Ports ------------
     rxbyterealign_out                       : out  std_logic;
     rxmcommaalignen_in                      : in   std_logic;
@@ -73,7 +73,7 @@ port (
     gtptxn_out                              : out  std_logic;
     gtptxp_out                              : out  std_logic;
     ------------------- Transmit Ports - TX Buffer Ports -----------------------
-    txbufstatus_out                         : out  std_logic_vector(1 downto 0);
+    txbufstatus_out                         : out  std_logic;
     ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
     txoutclk_out                            : out  std_logic;
     ------------- Transmit Ports - TX Initialization and Reset Ports -----------
@@ -87,6 +87,10 @@ architecture RTL of FOFB_CC_GTP7_TILE_WRAPPER is
   signal  tied_to_ground_i                : std_logic;
   signal  tied_to_ground_vec_i            : std_logic_vector(63 downto 0);
   signal  tied_to_vcc_i                   : std_logic;
+
+  -- Buffer status signals
+  signal rxbufstatus                      : std_logic_vector(2 downto 0);
+  signal txbufstatus                      : std_logic_vector(1 downto 0);
 
   -- Convert integer to "TRUE" or "FALSE" string
   function int2boolstr(intval : integer := 0) return string is
@@ -138,7 +142,7 @@ begin
     rxnotintable_out            =>  rxnotintable_out,
     gtprxn_in                   =>  gtprxn_in,
     gtprxp_in                   =>  gtprxp_in,
-    rxbufstatus_out             =>  rxbufstatus_out,
+    rxbufstatus_out             =>  rxbufstatus,
     rxbyterealign_out           =>  rxbyterealign_out,
     rxmcommaalignen_in          =>  rxmcommaalignen_in,
     rxpcommaalignen_in          =>  rxpcommaalignen_in,
@@ -159,11 +163,14 @@ begin
     txcharisk_in                =>  txcharisk_in,
     gtptxn_out                  =>  gtptxn_out,
     gtptxp_out                  =>  gtptxp_out,
-    txbufstatus_out             =>  txbufstatus_out,
+    txbufstatus_out             =>  txbufstatus,
     txoutclk_out                =>  txoutclk_out,
     txoutclkfabric_out          =>  open,
     txoutclkpcs_out             =>  open,
     txresetdone_out             =>  txresetdone_out
   );
+
+  txbufstatus_out <= txbufstatus(1);
+  rxbufstatus_out <= rxbufstatus(2);
 
 end RTL;
