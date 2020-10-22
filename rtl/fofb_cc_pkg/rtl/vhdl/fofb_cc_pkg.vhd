@@ -185,6 +185,7 @@ end component;
 --
 -- Conditional Chipscope generation defines
 --
+constant GTP7_IF_CSGEN      : boolean := FALSE;
 constant GTX_IF_CSGEN       : boolean := FALSE;
 constant GTPA_IF_CSGEN      : boolean := FALSE;
 
