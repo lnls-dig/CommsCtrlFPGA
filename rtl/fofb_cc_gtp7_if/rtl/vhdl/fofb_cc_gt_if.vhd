@@ -95,6 +95,11 @@ signal plllkdet             : std_logic;
 signal refclkout            : std_logic;
 signal txoutclk             : std_logic_vector(3 downto 0);
 
+signal gtrefclk0            : std_logic;
+signal gtrefclk1            : std_logic;
+signal pll0refclksel        : std_logic;
+signal pllrst               : std_logic;
+
 signal loopback             : std_logic_2d_3(3 downto 0);
 signal powerdown            : std_logic_2d_2(3 downto 0);
 signal txdata               : std_logic_2d_16(3 downto 0);
@@ -234,10 +239,10 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
             GT_SIM_GTRESET_SPEEDUP      => SIM_GTPRESET_SPEEDUP
         )
         port map (
-            pll0clk_in                  => '1', -- FIXME: placeholder code
-            pll0refclk_in               => '1', -- FIXME: placeholder code
-            pll1clk_in                  => '1', -- FIXME: placeholder code
-            pll1refclk_in               => '1', -- FIXME: placeholder code
+            pll0clk_in                  => pll0clk;
+            pll0refclk_in               => pll0refclk;
+            pll1clk_in                  => pll1clk_in;
+            pll1refclk_in               => pll1refclk;
             rxuserrdy_in                => plllkdet,
             loopback_in                 => loopback(N),
             rxpd_in                     => powerdown(N),
@@ -275,6 +280,58 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
 
     txkerr(N) <= "00";
 end generate;
+
+--
+-- GTP Quad PLL instantiation
+--
+quad_pll : entity work.gtpe7_common
+    generic map
+    (
+        WRAPPER_SIM_GTRESET_SPEEDUP => "FALSE"
+    )
+    port map
+    (
+        PLL0OUTCLK_OUT        => pll0clk,
+        PLL0OUTREFCLK_OUT     => pll0refclk,
+        PLL0LOCK_OUT          => plllkdet,
+        PLL0LOCKDETCLK_IN     => '0',
+        PLL0REFCLKLOST_OUT    => open,
+        PLL0RESET_IN          => pllrst,
+        PLL0REFCLKSEL_IN      => pll0refclksel,
+        PLL0PD_IN             => '0',
+        PLL1OUTCLK_OUT        => pll1clk_in,
+        PLL1OUTREFCLK_OUT     => pll1refclk,
+        GTREFCLK1_IN          => gtrefclk1,
+        GTREFCLK0_IN          => gtrefclk0,
+    );
+
+refclk0_gen : if GTP7_IF_REFCLK = "REFCLK0" generate
+    gtrefclk0     <= ref_clk;
+    gtrefclk1     <= '0';
+    pll0refclksel <= "001";
+end generate;
+
+refclk1_gen : if GTP7_IF_REFCLK = "REFCLK1" generate
+    gtrefclk0     <= '0';
+    gtrefclk1     <= ref_clk;
+    pll0refclksel <= "010";
+end generate;
+
+--
+-- GTP Quad PLL reset logic (AR #43482)
+--
+quad_pll_reset : entity work.gtpe7_common_reset is 
+    generic map
+    (
+        STABLE_CLOCK_PERIOD   => 8
+    );
+    port map
+    (    
+        STABLE_CLOCK          => init_clk,
+        SOFT_RESET            => '0',         -- FIXME: placeholder code
+        COMMON_RESET          => pllrst
+   );
+end gtpe7_common_reset;
 
 --
 -- Conditional chipscope generation
