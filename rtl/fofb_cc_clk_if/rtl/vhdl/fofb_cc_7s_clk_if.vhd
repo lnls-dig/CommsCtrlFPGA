@@ -90,7 +90,7 @@ refclk_ibufds : IBUFDS_GTE2
 
 user_clock_bufg : BUFG
     port map (
-        I => refclk,
+        I => txoutclk_i,  -- UG482 (v1.9) pag. 79 - Fig. 3-3: Multiple Lanes — TXOUTCLK Drives TXUSRCLK2 (2-Byte Mode)
         O => userclk
     );
 
