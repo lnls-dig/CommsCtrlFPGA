@@ -15,6 +15,7 @@
 *.wlf
 work/
 *.out
+modelsim.ini
 
 ######################
 # Temporary files
