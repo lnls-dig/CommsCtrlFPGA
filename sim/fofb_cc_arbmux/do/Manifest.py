@@ -17,5 +17,3 @@ modules = {
 }
 
 files = ["../bench/fofb_cc_arbmux_tb.vhd"]
-
-sim_post_cmd = "vsim -do run.do"
