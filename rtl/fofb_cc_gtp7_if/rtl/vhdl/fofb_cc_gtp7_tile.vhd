@@ -97,6 +97,11 @@ port
     pll0refclk_in                           : in   std_logic;
     pll1clk_in                              : in   std_logic;
     pll1refclk_in                           : in   std_logic;
+    ------------------------------- Loopback Ports -----------------------------
+    loopback_in                             : in   std_logic_vector(2 downto 0);
+    ------------------------------ Power-Down Ports ----------------------------
+    rxpd_in                                 : in   std_logic_vector(1 downto 0);
+    txpd_in                                 : in   std_logic_vector(1 downto 0);
     --------------------- RX Initialization and Reset Ports --------------------
     eyescanreset_in                         : in   std_logic;
     rxuserrdy_in                            : in   std_logic;
@@ -149,6 +154,8 @@ port
     --------------- Transmit Ports - TX Configurable Driver Ports --------------
     gtptxn_out                              : out  std_logic;
     gtptxp_out                              : out  std_logic;
+    ------------------- Transmit Ports - TX Buffer Ports -----------------------
+    txbufstatus_out                         : out  std_logic_vector(1 downto 0);
     ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
     txoutclk_out                            : out  std_logic;
     txoutclkfabric_out                      : out  std_logic;
@@ -673,7 +680,7 @@ begin
         PLL1CLK                         =>      pll1clk_in,
         PLL1REFCLK                      =>      pll1refclk_in,
         ------------------------------- Loopback Ports -----------------------------
-        LOOPBACK                        =>      tied_to_ground_vec_i(2 downto 0),
+        LOOPBACK                        =>      loopback_in,
         ----------------------------- PCI Express Ports ----------------------------
         PHYSTATUS                       =>      open,
         RXRATE                          =>      tied_to_ground_vec_i(2 downto 0),
@@ -682,8 +689,8 @@ begin
         PMARSVDIN3                      =>      '0',
         PMARSVDIN4                      =>      '0',
         ------------------------------ Power-Down Ports ----------------------------
-        RXPD                            =>      "00",
-        TXPD                            =>      "00",
+        RXPD                            =>      rxpd_in,
+        TXPD                            =>      txpd_in,
         -------------------------- RX 8B/10B Decoder Ports -------------------------
         SETERRSTATUS                    =>      tied_to_ground_i,
         --------------------- RX Initialization and Reset Ports --------------------
@@ -900,7 +907,7 @@ begin
         TXPHINITDONE                    =>      open,
         TXPHOVRDEN                      =>      tied_to_ground_i,
         ---------------------- Transmit Ports - TX Buffer Ports --------------------
-        TXBUFSTATUS                     =>      open,
+        TXBUFSTATUS                     =>      txbufstatus_out,
         ------------ Transmit Ports - TX Buffer and Phase Alignment Ports ----------
         TXSYNCALLIN                     =>      tied_to_ground_i,
         TXSYNCDONE                      =>      open,

@@ -43,7 +43,12 @@ port (
     pll0clk_in                              : in   std_logic;
     pll0refclk_in                           : in   std_logic;
     pll1clk_in                              : in   std_logic;
-    pll1refclk_in                           : in   std_logic;
+    pll1refclk_in                           : in   std_logic;    
+    ------------------------------- Loopback Ports -----------------------------
+    loopback_in                             : in   std_logic_vector(2 downto 0);
+    ------------------------------ Power-Down Ports ----------------------------
+    rxpd_in                                 : in   std_logic_vector(1 downto 0);
+    txpd_in                                 : in   std_logic_vector(1 downto 0);
     --------------------- RX Initialization and Reset Ports --------------------
     eyescanreset_in                         : in   std_logic;
     rxuserrdy_in                            : in   std_logic;
@@ -96,6 +101,8 @@ port (
     --------------- Transmit Ports - TX Configurable Driver Ports --------------
     gtptxn_out                              : out  std_logic;
     gtptxp_out                              : out  std_logic;
+    ------------------- Transmit Ports - TX Buffer Ports -----------------------
+    txbufstatus_out                         : out  std_logic_vector(1 downto 0);
     ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
     txoutclk_out                            : out  std_logic;
     txoutclkfabric_out                      : out  std_logic;
@@ -134,6 +141,9 @@ begin
     pll0refclk_in               =>  pll0refclk_in,
     pll1clk_in                  =>  pll1clk_in,
     pll1refclk_in               =>  pll1refclk_in,
+    loopback_in                 =>  loopback_in,
+    rxpd_in                     =>  rxpd_in,
+    txpd_in                     =>  txpd_in,
     eyescanreset_in             =>  eyescanreset_in,
     rxuserrdy_in                =>  rxuserrdy_in,
     eyescandataerror_out        =>  eyescandataerror_out,
@@ -168,6 +178,7 @@ begin
     txcharisk_in                =>  txcharisk_in,
     gtptxn_out                  =>  gtptxn_out,
     gtptxp_out                  =>  gtptxp_out,
+    txbufstatus_out             =>  txbufstatus_out,
     txoutclk_out                =>  txoutclk_out,
     txoutclkfabric_out          =>  txoutclkfabric_out,
     txoutclkpcs_out             =>  txoutclkpcs_out,
