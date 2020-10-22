@@ -84,9 +84,7 @@ end FOFB_CC_GTP7_TILE_WRAPPER;
 architecture RTL of FOFB_CC_GTP7_TILE_WRAPPER is
 
   -- ground and tied_to_vcc_i signals
-  signal  tied_to_ground_i                : std_logic;
-  signal  tied_to_ground_vec_i            : std_logic_vector(63 downto 0);
-  signal  tied_to_vcc_i                   : std_logic;
+  signal  tied_to_ground_i                : std_logic := '0';
 
   -- Buffer status signals
   signal rxbufstatus                      : std_logic_vector(2 downto 0);
