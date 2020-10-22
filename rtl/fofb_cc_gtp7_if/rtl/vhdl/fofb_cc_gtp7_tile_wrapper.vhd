@@ -21,182 +21,157 @@ use unisim.vcomponents.all;
 entity FOFB_CC_GTP7_TILE_WRAPPER is
 generic (
     -- Simulation attributes
-    GTX_SIM_GTXRESET_SPEEDUP    : integer    := 0  -- Set to 1 to speed up sim reset
+    GTX_SIM_GTXRESET_SPEEDUP                : integer  := 0;  -- Set to 1 to speed up sim reset
+    EXAMPLE_SIMULATION                      : integer  := 0;  -- Set to 1 for simulation
+    TXSYNC_OVRD_IN                          : bit      := '0';
+    TXSYNC_MULTILANE_IN                     : bit      := '0' 
 );
 port (
-    ------------------------ Loopback and Powerdown Ports ----------------------
-    LOOPBACK_IN                             : in   std_logic_vector(2 downto 0);
-    RXPOWERDOWN_IN                          : in   std_logic_vector(1 downto 0);
-    TXPOWERDOWN_IN                          : in   std_logic_vector(1 downto 0);
-    ----------------------- Receive Ports - 8b10b Decoder ----------------------
-    RXCHARISK_OUT                           : out  std_logic_vector(1 downto 0);
-    RXDISPERR_OUT                           : out  std_logic_vector(1 downto 0);
-    RXNOTINTABLE_OUT                        : out  std_logic_vector(1 downto 0);
-    --------------- Receive Ports - Comma Detection and Alignment --------------
-    RXBYTEREALIGN_OUT                       : out  std_logic;
-    RXENMCOMMAALIGN_IN                      : in   std_logic;
-    RXENPCOMMAALIGN_IN                      : in   std_logic;
-    ------------------- Receive Ports - RX Data Path interface -----------------
-    RXDATA_OUT                              : out  std_logic_vector(15 downto 0);
-    RXRESET_IN                              : in   std_logic;
-    RXUSRCLK2_IN                            : in   std_logic;
-    ------- Receive Ports - RX Driver,OOB signalling,Coupling and Eq.,CDR ------
-    RXN_IN                                  : in   std_logic;
-    RXP_IN                                  : in   std_logic;
-    -------- Receive Ports - RX Elastic Buffer and Phase Alignment Ports -------
-    RXBUFSTATUS_OUT                         : out  std_logic;
-    ------------------------ Receive Ports - RX PLL Ports ----------------------
-    GTXRXRESET_IN                           : in   std_logic;
-    MGTREFCLKRX_IN                          : in   std_logic_vector(1 downto 0);
-    PLLRXRESET_IN                           : in   std_logic;
-    RXPLLLKDET_OUT                          : out  std_logic;
-    RXRESETDONE_OUT                         : out  std_logic;
-    ----------------- Receive Ports - RX Polarity Control Ports --------------···--
-    RXPOLARITY_IN                           : in   std_logic;
-    ---------------- Transmit Ports - 8b10b Encoder Control Ports --------------
-    TXCHARISK_IN                            : in   std_logic_vector(1 downto 0);
-    TXKERR_OUT                              : out  std_logic_vector(1 downto 0);
-    ------------------ Transmit Ports - TX Data Path interface -----------------
-    TXDATA_IN                               : in   std_logic_vector(15 downto 0);
-    TXOUTCLK_OUT                            : out  std_logic;
-    TXRESET_IN                              : in   std_logic;
-    TXUSRCLK2_IN                            : in   std_logic;
-    ---------------- Transmit Ports - TX Driver and OOB signaling --------------
-    TXN_OUT                                 : out  std_logic;
-    TXP_OUT                                 : out  std_logic;
-    ----------- Transmit Ports - TX Elastic Buffer and Phase Alignment ---------
-    TXBUFSTATUS_OUT                         : out  std_logic;
-    ----------------------- Transmit Ports - TX PLL Ports ----------------------
-    GTXTXRESET_IN                           : in   std_logic;
-    MGTREFCLKTX_IN                          : in   std_logic_vector(1 downto 0);
-    PLLTXRESET_IN                           : in   std_logic;
-    TXPLLLKDET_OUT                          : out  std_logic;
-    TXRESETDONE_OUT                         : out  std_logic;
-    -- Board clock to drive AR #35681 workaround logic
-    -- This saves one BUFG instead of driving with GT REFCLK
-    INIT_CLK_IN                             : in  std_logic;
-    LINK_RESET_IN                           : in  std_logic_vector(1 downto 0)
+    rst_in                                  : in   std_logic;
+    drp_busy_out                            : out  std_logic;
+    rxpmaresetdone                          : out  std_logic;
+    txpmaresetdone                          : out  std_logic;
+    ---------------------------- Channel - DRP Ports  --------------------------
+    drpaddr_in                              : in   std_logic_vector(8 downto 0);
+    drpclk_in                               : in   std_logic;
+    drpdi_in                                : in   std_logic_vector(15 downto 0);
+    drpdo_out                               : out  std_logic_vector(15 downto 0);
+    drpen_in                                : in   std_logic;
+    drprdy_out                              : out  std_logic;
+    drpwe_in                                : in   std_logic;
+    ------------------------ GTPE2_CHANNEL Clocking Ports ----------------------
+    pll0clk_in                              : in   std_logic;
+    pll0refclk_in                           : in   std_logic;
+    pll1clk_in                              : in   std_logic;
+    pll1refclk_in                           : in   std_logic;
+    --------------------- RX Initialization and Reset Ports --------------------
+    eyescanreset_in                         : in   std_logic;
+    rxuserrdy_in                            : in   std_logic;
+    -------------------------- RX Margin Analysis Ports ------------------------
+    eyescandataerror_out                    : out  std_logic;
+    eyescantrigger_in                       : in   std_logic;
+    ------------------- Receive Ports - Clock Correction Ports -----------------
+    rxclkcorcnt_out                         : out  std_logic_vector(1 downto 0);
+    ------------------ Receive Ports - FPGA RX Interface Ports -----------------
+    rxdata_out                              : out  std_logic_vector(15 downto 0);
+    rxusrclk_in                             : in   std_logic;
+    rxusrclk2_in                            : in   std_logic;
+    ------------------ Receive Ports - RX 8B/10B Decoder Ports -----------------
+    rxcharisk_out                           : out  std_logic_vector(1 downto 0);
+    rxdisperr_out                           : out  std_logic_vector(1 downto 0);
+    rxnotintable_out                        : out  std_logic_vector(1 downto 0);
+    ------------------------ Receive Ports - RX AFE Ports ----------------------
+    gtprxn_in                               : in   std_logic;
+    gtprxp_in                               : in   std_logic;
+    ------------------- Receive Ports - RX Buffer Bypass Ports -----------------
+    rxbufstatus_out                         : out  std_logic_vector(2 downto 0);
+    -------------- Receive Ports - RX Byte and Word Alignment Ports ------------
+    rxbyterealign_out                       : out  std_logic;
+    rxmcommaalignen_in                      : in   std_logic;
+    rxpcommaalignen_in                      : in   std_logic;
+    ------------ Receive Ports - RX Decision Feedback Equalizer(DFE) -----------
+    dmonitorout_out                         : out  std_logic_vector(14 downto 0);
+    -------------------- Receive Ports - RX Equailizer Ports -------------------
+    rxlpmhfhold_in                          : in   std_logic;
+    rxlpmlfhold_in                          : in   std_logic;
+    --------------- Receive Ports - RX Fabric Output Control Ports -------------
+    rxoutclk_out                            : out  std_logic;
+    rxoutclkfabric_out                      : out  std_logic;
+    ------------- Receive Ports - RX Initialization and Reset Ports ------------
+    gtrxreset_in                            : in   std_logic;
+    rxlpmreset_in                           : in   std_logic;
+    ----------------- Receive Ports - RX Polarity Control Ports ----------------
+    rxpolarity_in                           : in   std_logic;
+    -------------- Receive Ports -RX Initialization and Reset Ports ------------
+    rxresetdone_out                         : out  std_logic;
+    --------------------- TX Initialization and Reset Ports --------------------
+    gttxreset_in                            : in   std_logic;
+    txuserrdy_in                            : in   std_logic;
+    ------------------ Transmit Ports - FPGA TX Interface Ports ----------------
+    txdata_in                               : in   std_logic_vector(15 downto 0);
+    txusrclk_in                             : in   std_logic;
+    txusrclk2_in                            : in   std_logic;
+    ------------------ Transmit Ports - TX 8B/10B Encoder Ports ----------------
+    txcharisk_in                            : in   std_logic_vector(1 downto 0);
+    --------------- Transmit Ports - TX Configurable Driver Ports --------------
+    gtptxn_out                              : out  std_logic;
+    gtptxp_out                              : out  std_logic;
+    ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
+    txoutclk_out                            : out  std_logic;
+    txoutclkfabric_out                      : out  std_logic;
+    txoutclkpcs_out                         : out  std_logic;
+    ------------- Transmit Ports - TX Initialization and Reset Ports -----------
+    txresetdone_out                         : out  std_logic
 );
 end FOFB_CC_GTP7_TILE_WRAPPER;
 
 architecture RTL of FOFB_CC_GTP7_TILE_WRAPPER is
 
--- ground and tied_to_vcc_i signals
-signal  tied_to_ground_i                : std_logic;
-signal  tied_to_ground_vec_i            : std_logic_vector(63 downto 0);
-signal  tied_to_vcc_i                   : std_logic;
-
--- RX Datapath signals
-signal rxdata_i                         : std_logic_vector(31 downto 0);
-signal rxchariscomma_float_i            : std_logic_vector(1 downto 0);
-signal rxcharisk_float_i                : std_logic_vector(1 downto 0);
-signal rxdisperr_float_i                : std_logic_vector(1 downto 0);
-signal rxnotintable_float_i             : std_logic_vector(1 downto 0);
-signal rxrundisp_float_i                : std_logic_vector(1 downto 0);
-
--- TX Datapath signals
-signal txdata_i                         : std_logic_vector(31 downto 0);
-signal txkerr_float_i                   : std_logic_vector(1 downto 0);
-signal txrundisp_float_i                : std_logic_vector(1 downto 0);
-
-signal RXRESET_IN_BUF                   : std_logic;
-signal RXPLLLKDET_BUF                   : std_logic;
-signal count_for_reset                  : std_logic_vector(10 downto 0);
-signal gtx_test1                        : std_logic;
-signal gtxtest_w                        : std_logic_vector(12 downto 0);
-
-signal RXBUFSTATUS                      : std_logic_vector(2 downto 0);
-signal TXBUFSTATUS                      : std_logic_vector(1 downto 0);
+  -- ground and tied_to_vcc_i signals
+  signal  tied_to_ground_i                : std_logic;
+  signal  tied_to_ground_vec_i            : std_logic_vector(63 downto 0);
+  signal  tied_to_vcc_i                   : std_logic;
 
 begin
-
-RXRESET_IN_BUF <= RXRESET_IN OR LINK_RESET_IN(1);
-
-------------------- FIX for TX/RXPLL_DIVSEL_OUT = 2 or 4 ----------------------
--- Refer AR #35681 - Virtex-6 GTX Transceiver - MMCM fails to lock and
--- TX/RXRESETDONE fails to assert
-RXPLLLKDET_OUT <= RXPLLLKDET_BUF;
-
-process(INIT_CLK_IN)
-begin
-    if rising_edge(INIT_CLK_IN) then
-        if(RXPLLLKDET_BUF = '1') then
-            count_for_reset <= count_for_reset + 1;
-            if(count_for_reset = "11100000000") then
-                count_for_reset <= count_for_reset;
-            end if;
-        else
-            count_for_reset <= "00000000000";
-        end if;
-    end if;
-end process;
-
-gtx_test1 <= '1' when ((count_for_reset > "10000000000") and (count_for_reset < "10100000000")) else
-             '0' when ((count_for_reset > "10100000000") and (count_for_reset < "11000000000")) else
-             '1' when ((count_for_reset > "11000000000") and (count_for_reset < "11100000000")) else
-             '0';
-
-gtxtest_w <= "1000000" & link_reset_in(0) & link_reset_in(0) & link_reset_in(0) & '0' & gtx_test1 & '0';
-
-GTP7_TILE : entity work.FOFB_CC_GTP7_TILE
-generic map (
-    GTX_SIM_GTXRESET_SPEEDUP    => GTX_SIM_GTXRESET_SPEEDUP,
-    GTX_TX_CLK_SOURCE           => "RXPLL",
-    GTX_POWER_SAVE              => "0000110100"
-)
-port map (
-    GTXTEST_IN                  => gtxtest_w,
-
-    LOOPBACK_IN                 => LOOPBACK_IN,
-    RXPOWERDOWN_IN              => RXPOWERDOWN_IN,
-    TXPOWERDOWN_IN              => TXPOWERDOWN_IN,
-
-    RXCHARISK_OUT               => RXCHARISK_OUT,
-    RXDISPERR_OUT               => RXDISPERR_OUT,
-    RXNOTINTABLE_OUT            => RXNOTINTABLE_OUT,
-
-    RXBYTEREALIGN_OUT           => RXBYTEREALIGN_OUT,
-    RXENMCOMMAALIGN_IN          => RXENMCOMMAALIGN_IN,
-    RXENPCOMMAALIGN_IN          => RXENPCOMMAALIGN_IN,
-
-    RXDATA_OUT                  => RXDATA_OUT,
-    RXRESET_IN                  => RXRESET_IN_BUF,
-    RXUSRCLK2_IN                => RXUSRCLK2_IN,
-
-    RXN_IN                      => RXN_IN,
-    RXP_IN                      => RXP_IN,
-
-    RXBUFSTATUS_OUT             => RXBUFSTATUS,
-
-    GTXRXRESET_IN               => GTXRXRESET_IN,
-    MGTREFCLKRX_IN              => MGTREFCLKRX_IN,
-    PLLRXRESET_IN               => PLLRXRESET_IN,
-    RXPLLLKDET_OUT              => RXPLLLKDET_BUF,
-    RXRESETDONE_OUT             => RXRESETDONE_OUT,
-
-    RXPOLARITY_IN               => RXPOLARITY_IN,
-
-    TXCHARISK_IN                => TXCHARISK_IN,
-    TXKERR_OUT                  => TXKERR_OUT,
-
-    TXDATA_IN                   => TXDATA_IN,
-    TXOUTCLK_OUT                => TXOUTCLK_OUT,
-    TXRESET_IN                  => TXRESET_IN,
-    TXUSRCLK2_IN                => TXUSRCLK2_IN,
-
-    TXN_OUT                     => TXN_OUT,
-    TXP_OUT                     => TXP_OUT,
-
-    TXBUFSTATUS_OUT             => TXBUFSTATUS,
-
-    GTXTXRESET_IN               => GTXTXRESET_IN,
-    MGTREFCLKTX_IN              => MGTREFCLKTX_IN,
-    PLLTXRESET_IN               => PLLTXRESET_IN,
-    TXPLLLKDET_OUT              => TXPLLLKDET_OUT,
-    TXRESETDONE_OUT             => TXRESETDONE_OUT
-);
-
-TXBUFSTATUS_OUT <= TXBUFSTATUS(1);
-RXBUFSTATUS_OUT <= RXBUFSTATUS(2);
+  gtp7_tile : entity work.fofb_cc_gtp7_tile
+  generic map (
+    -- simulation attributes
+    GT_SIM_GTRESET_SPEEDUP      => "TRUE"
+  )
+  port map (
+    rst_in                      =>  rst_in,
+    drp_busy_out                =>  drp_busy_out,
+    rxpmaresetdone              =>  rxpmaresetdone,
+    txpmaresetdone              =>  txpmaresetdone,
+    drpaddr_in                  =>  drpaddr_in,
+    drpclk_in                   =>  drpclk_in,
+    drpdi_in                    =>  drpdi_in,
+    drpdo_out                   =>  drpdo_out,
+    drpen_in                    =>  drpen_in,
+    drprdy_out                  =>  drprdy_out,
+    drpwe_in                    =>  drpwe_in,
+    pll0clk_in                  =>  pll0clk_in,
+    pll0refclk_in               =>  pll0refclk_in,
+    pll1clk_in                  =>  pll1clk_in,
+    pll1refclk_in               =>  pll1refclk_in,
+    eyescanreset_in             =>  eyescanreset_in,
+    rxuserrdy_in                =>  rxuserrdy_in,
+    eyescandataerror_out        =>  eyescandataerror_out,
+    eyescantrigger_in           =>  eyescantrigger_in,
+    rxclkcorcnt_out             =>  rxclkcorcnt_out,
+    rxdata_out                  =>  rxdata_out,
+    rxusrclk_in                 =>  rxusrclk_in,
+    rxusrclk2_in                =>  rxusrclk2_in,
+    rxcharisk_out               =>  rxcharisk_out,
+    rxdisperr_out               =>  rxdisperr_out,
+    rxnotintable_out            =>  rxnotintable_out,
+    gtprxn_in                   =>  gtprxn_in,
+    gtprxp_in                   =>  gtprxp_in,
+    rxbufstatus_out             =>  rxbufstatus_out,
+    rxbyterealign_out           =>  rxbyterealign_out,
+    rxmcommaalignen_in          =>  rxmcommaalignen_in,
+    rxpcommaalignen_in          =>  rxpcommaalignen_in,
+    dmonitorout_out             =>  dmonitorout_out,
+    rxlpmhfhold_in              =>  rxlpmhfhold_in,
+    rxlpmlfhold_in              =>  rxlpmlfhold_in,
+    rxoutclk_out                =>  rxoutclk_out,
+    rxoutclkfabric_out          =>  rxoutclkfabric_out,
+    gtrxreset_in                =>  gtrxreset_in,
+    rxlpmreset_in               =>  rxlpmreset_in,
+    rxpolarity_in               =>  rxpolarity_in,
+    rxresetdone_out             =>  rxresetdone_out,
+    gttxreset_in                =>  gttxreset_in,
+    txuserrdy_in                =>  txuserrdy_in,
+    txdata_in                   =>  txdata_in,
+    txusrclk_in                 =>  txusrclk_in,
+    txusrclk2_in                =>  txusrclk2_in,
+    txcharisk_in                =>  txcharisk_in,
+    gtptxn_out                  =>  gtptxn_out,
+    gtptxp_out                  =>  gtptxp_out,
+    txoutclk_out                =>  txoutclk_out,
+    txoutclkfabric_out          =>  txoutclkfabric_out,
+    txoutclkpcs_out             =>  txoutclkpcs_out,
+    txresetdone_out             =>  txresetdone_out
+  );
 
 end RTL;
