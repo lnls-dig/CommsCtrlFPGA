@@ -16,7 +16,7 @@ generic (
 );
 end fofb_cc_fa_intf_tb;
 
-ARCHITECTURE behavior OF fofb_cc_fa_intf_tb IS 
+ARCHITECTURE behavior OF fofb_cc_fa_intf_tb IS
 
 signal mgt_clk              : std_logic := '0';
 signal adc_clk              : std_logic := '0';
@@ -56,8 +56,12 @@ port map(
     fa_data_valid_i     => fa_data_valid,
     fa_dat_i            => fa_dat,
 
-    fa_x_psel_i         => X"7",
-    fa_y_psel_i         => X"8",
+    -- each 8 bits (4 LSB for X and 4 MSB for Y) determine the address in which
+    -- the positons X/Y will be read. As fa_psel_i is 32 bits, it supports up to
+    -- 4 BPM addresses (7 downto 0 => BPM 0, 15 downto 8 => BPM 1, ...).
+    -- From the documentation, X would be under block address 14 (15-1) and Y under
+    -- block address 15 (16-1)
+    fa_psel_i         => X"FE_FE_FE_FE",
 
     timeframe_start_o   => timeframe_start,
     bpm_cc_xpos_o       => bpm_cc_xpos,
