@@ -66,24 +66,26 @@ begin
 --  Static signal Assigments
 tied_to_ground <= '0';
 
-----------------------------------------------------
--- Virtex2Pro Clock Interface with or without a DCM
-----------------------------------------------------
+----------------------
+-- 7-series Interface
+----------------------
 
 -- Output assignments
 refclk_o     <= refclk;
-userclk_o    <= userclk;        -- 106.25MHz
-userclk_2x_o <= userclk;        -- 106.25MHz
+userclk_o    <= userclk;        -- 156.25MHz
+userclk_2x_o <= userclk;        -- 156.25MHz
 initclk_o    <= tied_to_ground;
 gtreset_o    <= tied_to_ground;
 mgtreset_o   <= mgtreset;
 
--- Differential clock input for MGT/GTP
-refclk_ibufds : IBUFGDS
+-- Differential clock input for 7-series GTP
+refclk_ibufds : IBUFDS_GTE2
     port map (
         O   => refclk,
         I   => refclk_p_i,
         IB  => refclk_n_i
+        ODIV2   => open,
+        CEB     => '0',
     );
 
 user_clock_bufg : BUFG
