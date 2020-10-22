@@ -90,24 +90,10 @@ end fofb_cc_gt_if;
 
 architecture rtl of fofb_cc_gt_if is 
 
--- GTP_DUAL 0 & 1
-signal rxusrclk0            : std_logic := '0';
-signal rxusrclk1            : std_logic := '0';
-signal rxusrclk20           : std_logic := '0';
-signal rxusrclk21           : std_logic := '0';
 signal clkin                : std_logic := '0';
-signal txusrclk0            : std_logic := '0';
-signal txusrclk1            : std_logic := '0';
-signal txusrclk20           : std_logic := '0';
-signal txusrclk21           : std_logic := '0';
 signal plllkdet             : std_logic;
-signal rxplllkdet           : std_logic_vector(3 downto 0);
-signal txplllkdet           : std_logic_vector(3 downto 0);
 signal refclkout            : std_logic;
 signal txoutclk             : std_logic_vector(3 downto 0);
-signal open_rxbufstatus     : std_logic_vector(1 downto 0);
-signal open_txbufstatus     : std_logic;
-signal rxelecidlereset      : std_logic_vector(3 downto 0);
 
 signal loopback             : std_logic_2d_3(3 downto 0);
 signal powerdown            : std_logic_2d_2(3 downto 0);
@@ -160,9 +146,6 @@ rx_dat_o <= rx_dat_buffer;
 rx_dat_val_o <= rx_dat_val_buffer;
 linksup_o <= linksup_buffer;
 link_partner_o <= link_partner_buffer;
-
--- connect tx_lock to tx_lock_i from lane 0
-plllkdet_o <= rxplllkdet(0);
 
 userclk <= userclk_i;
 resetdone <= rxresetdone and txresetdone;
@@ -248,51 +231,49 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
     gtp7_tile_wrapper : entity work.fofb_cc_gtp7_tile_wrapper
         generic map (
             -- simulation attributes
-            GTX_SIM_GTXRESET_SPEEDUP    => SIM_GTPRESET_SPEEDUP
+            GT_SIM_GTRESET_SPEEDUP      => SIM_GTPRESET_SPEEDUP
         )
         port map (
+            pll0clk_in                  => '1', -- FIXME: placeholder code
+            pll0refclk_in               => '1', -- FIXME: placeholder code
+            pll1clk_in                  => '1', -- FIXME: placeholder code
+            pll1refclk_in               => '1', -- FIXME: placeholder code
+            rxuserrdy_in                => plllkdet,
             loopback_in                 => loopback(N),
-            rxpowerdown_in              => powerdown(N),
-            txpowerdown_in              => powerdown(N),
+            rxpd_in                     => powerdown(N),
+            txpd_in                     => powerdown(N),
+
             rxcharisk_out               => rxcharisk(N),
             rxdisperr_out               => rxdisperr(N),
             rxnotintable_out            => rxnotintable(N),
             rxbyterealign_out           => rxrealign(N),
-            rxenmcommaalign_in          => rxenmcommaalign(N),
-            rxenpcommaalign_in          => rxenpcommaalign(N),
+            rxmcommaalignen_in          => rxenmcommaalign(N),
+            rxpcommaalignen_in          => rxenpcommaalign(N),
             rxdata_out                  => rxdata(N),
-            rxreset_in                  => rxreset(N),
+            gtrxreset_in                => rxreset(N),
             rxusrclk2_in                => userclk_2x_i,
-            rxn_in                      => rxn(N),
-            rxp_in                      => rxp(N),
+            gtprxn_in                   => rxn(N),
+            gtprxp_in                   => rxp(N),
             rxbufstatus_out             => rxbuferr(N),
-            gtxrxreset_in               => gtreset_i,
-            mgtrefclkrx_in(0)           => refclk_i,
-            mgtrefclkrx_in(1)           => tied_to_ground,
-            pllrxreset_in               => tied_to_ground,
-            rxplllkdet_out              => rxplllkdet(N),
             rxresetdone_out             => rxresetdone(N),
             rxpolarity_in               => rxpolarity_i(N),
 
-            gtxtxreset_in               => gtreset_i,
-            mgtrefclktx_in(0)           => refclk_i,
-            mgtrefclktx_in(1)           => tied_to_ground,
-            plltxreset_in               => tied_to_ground,
-            txplllkdet_out              => txplllkdet(n),
             txresetdone_out             => txresetdone(n),
-            init_clk_in                 => initclk_i,
-            link_reset_in               => "00",
+            drpclk_in                   => initclk_i,
+            rst_in                      => '0', -- FIXME: placeholder code
 
+            txuserrdy_in                => plllkdet,
             txcharisk_in                => txcharisk(N),
-            txkerr_out                  => txkerr(N),
             txbufstatus_out             => txbuferr(N),
             txdata_in                   => txdata(N),
             txoutclk_out                => txoutclk(N),
-            txreset_in                  => txreset(N),
+            gttxreset_in                => txreset(N),
             txusrclk2_in                => userclk_2x_i,
-            txn_out                     => txn(N),
-            txp_out                     => txp(N)
-        );
+            gtptxn_out                  => txn(N),
+            gtptxp_out                  => txp(N)
+    );
+
+    txkerr(N) <= "00";
 end generate;
 
 --
@@ -341,8 +322,7 @@ data(141 downto 140) <= txcharisk(2);
 data(143 downto 142) <= txcharisk(3);
 
 data(147 downto 144) <= resetdone;
-data(151 downto 148) <= txplllkdet;
-data(155 downto 152) <= rxplllkdet;
+data(151) <= plllkdet;
 data(165 downto 156) <= link_partner_buffer(0);
 data(175 downto 166) <= link_partner_buffer(2);
 
