@@ -21,24 +21,12 @@ use unisim.vcomponents.all;
 entity FOFB_CC_GTP7_TILE_WRAPPER is
 generic (
     -- Simulation attributes
-    GTX_SIM_GTXRESET_SPEEDUP                : integer  := 0;  -- Set to 1 to speed up sim reset
-    EXAMPLE_SIMULATION                      : integer  := 0;  -- Set to 1 for simulation
-    TXSYNC_OVRD_IN                          : bit      := '0';
-    TXSYNC_MULTILANE_IN                     : bit      := '0' 
+    GT_SIM_GTRESET_SPEEDUP                  : integer  := 0  -- Set to 1 to speed up sim reset
 );
 port (
     rst_in                                  : in   std_logic;
-    drp_busy_out                            : out  std_logic;
-    rxpmaresetdone                          : out  std_logic;
-    txpmaresetdone                          : out  std_logic;
     ---------------------------- Channel - DRP Ports  --------------------------
-    drpaddr_in                              : in   std_logic_vector(8 downto 0);
     drpclk_in                               : in   std_logic;
-    drpdi_in                                : in   std_logic_vector(15 downto 0);
-    drpdo_out                               : out  std_logic_vector(15 downto 0);
-    drpen_in                                : in   std_logic;
-    drprdy_out                              : out  std_logic;
-    drpwe_in                                : in   std_logic;
     ------------------------ GTPE2_CHANNEL Clocking Ports ----------------------
     pll0clk_in                              : in   std_logic;
     pll0refclk_in                           : in   std_logic;
@@ -50,16 +38,9 @@ port (
     rxpd_in                                 : in   std_logic_vector(1 downto 0);
     txpd_in                                 : in   std_logic_vector(1 downto 0);
     --------------------- RX Initialization and Reset Ports --------------------
-    eyescanreset_in                         : in   std_logic;
     rxuserrdy_in                            : in   std_logic;
-    -------------------------- RX Margin Analysis Ports ------------------------
-    eyescandataerror_out                    : out  std_logic;
-    eyescantrigger_in                       : in   std_logic;
-    ------------------- Receive Ports - Clock Correction Ports -----------------
-    rxclkcorcnt_out                         : out  std_logic_vector(1 downto 0);
     ------------------ Receive Ports - FPGA RX Interface Ports -----------------
     rxdata_out                              : out  std_logic_vector(15 downto 0);
-    rxusrclk_in                             : in   std_logic;
     rxusrclk2_in                            : in   std_logic;
     ------------------ Receive Ports - RX 8B/10B Decoder Ports -----------------
     rxcharisk_out                           : out  std_logic_vector(1 downto 0);
@@ -74,17 +55,8 @@ port (
     rxbyterealign_out                       : out  std_logic;
     rxmcommaalignen_in                      : in   std_logic;
     rxpcommaalignen_in                      : in   std_logic;
-    ------------ Receive Ports - RX Decision Feedback Equalizer(DFE) -----------
-    dmonitorout_out                         : out  std_logic_vector(14 downto 0);
-    -------------------- Receive Ports - RX Equailizer Ports -------------------
-    rxlpmhfhold_in                          : in   std_logic;
-    rxlpmlfhold_in                          : in   std_logic;
-    --------------- Receive Ports - RX Fabric Output Control Ports -------------
-    rxoutclk_out                            : out  std_logic;
-    rxoutclkfabric_out                      : out  std_logic;
     ------------- Receive Ports - RX Initialization and Reset Ports ------------
-    gtrxreset_in                            : in   std_logic;
-    rxlpmreset_in                           : in   std_logic;
+    gtrxreset_in                            : in   std_logic;    
     ----------------- Receive Ports - RX Polarity Control Ports ----------------
     rxpolarity_in                           : in   std_logic;
     -------------- Receive Ports -RX Initialization and Reset Ports ------------
@@ -94,7 +66,6 @@ port (
     txuserrdy_in                            : in   std_logic;
     ------------------ Transmit Ports - FPGA TX Interface Ports ----------------
     txdata_in                               : in   std_logic_vector(15 downto 0);
-    txusrclk_in                             : in   std_logic;
     txusrclk2_in                            : in   std_logic;
     ------------------ Transmit Ports - TX 8B/10B Encoder Ports ----------------
     txcharisk_in                            : in   std_logic_vector(1 downto 0);
@@ -105,8 +76,6 @@ port (
     txbufstatus_out                         : out  std_logic_vector(1 downto 0);
     ----------- Transmit Ports - TX Fabric Clock Output Control Ports ----------
     txoutclk_out                            : out  std_logic;
-    txoutclkfabric_out                      : out  std_logic;
-    txoutclkpcs_out                         : out  std_logic;
     ------------- Transmit Ports - TX Initialization and Reset Ports -----------
     txresetdone_out                         : out  std_logic
 );
@@ -123,20 +92,20 @@ begin
   gtp7_tile : entity work.fofb_cc_gtp7_tile
   generic map (
     -- simulation attributes
-    GT_SIM_GTRESET_SPEEDUP      => "TRUE"
+    GT_SIM_GTRESET_SPEEDUP      => GT_SIM_GTRESET_SPEEDUP
   )
   port map (
     rst_in                      =>  rst_in,
-    drp_busy_out                =>  drp_busy_out,
-    rxpmaresetdone              =>  rxpmaresetdone,
-    txpmaresetdone              =>  txpmaresetdone,
-    drpaddr_in                  =>  drpaddr_in,
+    drp_busy_out                =>  open,
+    rxpmaresetdone              =>  open,
+    txpmaresetdone              =>  open,
+    drpaddr_in                  =>  "000000000",
     drpclk_in                   =>  drpclk_in,
-    drpdi_in                    =>  drpdi_in,
-    drpdo_out                   =>  drpdo_out,
-    drpen_in                    =>  drpen_in,
-    drprdy_out                  =>  drprdy_out,
-    drpwe_in                    =>  drpwe_in,
+    drpdi_in                    =>  x"0000",
+    drpdo_out                   =>  open,
+    drpen_in                    =>  tied_to_ground_i,
+    drprdy_out                  =>  open,
+    drpwe_in                    =>  tied_to_ground_i,
     pll0clk_in                  =>  pll0clk_in,
     pll0refclk_in               =>  pll0refclk_in,
     pll1clk_in                  =>  pll1clk_in,
@@ -144,13 +113,13 @@ begin
     loopback_in                 =>  loopback_in,
     rxpd_in                     =>  rxpd_in,
     txpd_in                     =>  txpd_in,
-    eyescanreset_in             =>  eyescanreset_in,
+    eyescanreset_in             =>  tied_to_ground_i,
     rxuserrdy_in                =>  rxuserrdy_in,
-    eyescandataerror_out        =>  eyescandataerror_out,
-    eyescantrigger_in           =>  eyescantrigger_in,
-    rxclkcorcnt_out             =>  rxclkcorcnt_out,
+    eyescandataerror_out        =>  open,
+    eyescantrigger_in           =>  tied_to_ground_i,
+    rxclkcorcnt_out             =>  open,
     rxdata_out                  =>  rxdata_out,
-    rxusrclk_in                 =>  rxusrclk_in,
+    rxusrclk_in                 =>  rxusrclk2_in,
     rxusrclk2_in                =>  rxusrclk2_in,
     rxcharisk_out               =>  rxcharisk_out,
     rxdisperr_out               =>  rxdisperr_out,
@@ -161,27 +130,27 @@ begin
     rxbyterealign_out           =>  rxbyterealign_out,
     rxmcommaalignen_in          =>  rxmcommaalignen_in,
     rxpcommaalignen_in          =>  rxpcommaalignen_in,
-    dmonitorout_out             =>  dmonitorout_out,
-    rxlpmhfhold_in              =>  rxlpmhfhold_in,
-    rxlpmlfhold_in              =>  rxlpmlfhold_in,
-    rxoutclk_out                =>  rxoutclk_out,
-    rxoutclkfabric_out          =>  rxoutclkfabric_out,
+    dmonitorout_out             =>  open,
+    rxlpmhfhold_in              =>  tied_to_ground_i,
+    rxlpmlfhold_in              =>  tied_to_ground_i,
+    rxoutclk_out                =>  open,
+    rxoutclkfabric_out          =>  open,
     gtrxreset_in                =>  gtrxreset_in,
-    rxlpmreset_in               =>  rxlpmreset_in,
+    rxlpmreset_in               =>  tied_to_ground_i,
     rxpolarity_in               =>  rxpolarity_in,
     rxresetdone_out             =>  rxresetdone_out,
     gttxreset_in                =>  gttxreset_in,
     txuserrdy_in                =>  txuserrdy_in,
     txdata_in                   =>  txdata_in,
-    txusrclk_in                 =>  txusrclk_in,
+    txusrclk_in                 =>  txusrclk2_in,
     txusrclk2_in                =>  txusrclk2_in,
     txcharisk_in                =>  txcharisk_in,
     gtptxn_out                  =>  gtptxn_out,
     gtptxp_out                  =>  gtptxp_out,
     txbufstatus_out             =>  txbufstatus_out,
     txoutclk_out                =>  txoutclk_out,
-    txoutclkfabric_out          =>  txoutclkfabric_out,
-    txoutclkpcs_out             =>  txoutclkpcs_out,
+    txoutclkfabric_out          =>  open,
+    txoutclkpcs_out             =>  open,
     txresetdone_out             =>  txresetdone_out
   );
 
