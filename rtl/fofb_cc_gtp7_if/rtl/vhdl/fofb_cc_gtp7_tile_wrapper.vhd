@@ -88,11 +88,23 @@ architecture RTL of FOFB_CC_GTP7_TILE_WRAPPER is
   signal  tied_to_ground_vec_i            : std_logic_vector(63 downto 0);
   signal  tied_to_vcc_i                   : std_logic;
 
+  -- Convert integer to "TRUE" or "FALSE" string
+  function int2boolstr(intval : integer := 0) return string is
+    variable stringval : string := "FALSE";
+  begin
+    if intval = 0 then
+      stringval := "FALSE";
+    else
+      stringval := "TRUE";
+    end if;
+    return stringval;
+  end function;
+
 begin
   gtp7_tile : entity work.fofb_cc_gtp7_tile
   generic map (
     -- simulation attributes
-    GT_SIM_GTRESET_SPEEDUP      => GT_SIM_GTRESET_SPEEDUP
+    GT_SIM_GTRESET_SPEEDUP      => int2boolstr(GT_SIM_GTRESET_SPEEDUP)
   )
   port map (
     rst_in                      =>  rst_in,
