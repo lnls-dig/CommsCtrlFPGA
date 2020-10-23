@@ -338,17 +338,11 @@ end gtpe7_common_reset;
 --
 CSCOPE_GEN : if (GTP7_IF_CSGEN = true) generate
 
-icon_inst : icon
+ila_core_inst : ila_t8_d256_s16384
     port map (
-        control0        => control
-    );
-
-ila_inst : ila_t8_d64_s16384
-    port map (
-        control         => control,
         clk             => userclk,
-        data            => data,
-        trig0           => trig0
+        probe0          => data,
+        probe1          => trig0
      );
 
 trig0(0)           <= timeframe_start_i;
@@ -379,17 +373,19 @@ data(141 downto 140) <= txcharisk(2);
 data(143 downto 142) <= txcharisk(3);
 
 data(147 downto 144) <= resetdone;
-data(151) <= plllkdet;
-data(165 downto 156) <= link_partner_buffer(0);
-data(175 downto 166) <= link_partner_buffer(2);
+data(151)            <= plllkdet;
+data(161 downto 152) <= link_partner_buffer(0);
+data(171 downto 162) <= link_partner_buffer(2);
 
-data(183 downto 176) <= linksup_buffer;
+data(179 downto 172) <= linksup_buffer;
 
-data(184)            <= timeframe_start_i;
-data(185)            <= timeframe_valid_i;
+data(180)            <= timeframe_start_i;
+data(181)            <= timeframe_valid_i;
 
-data(189 downto 186) <= rxrealign;
-data(193 downto 190) <= rxbuferr;
+data(185 downto 182) <= rxrealign;
+data(189 downto 186) <= rxbuferr;
+
+data(255 downto 190)  <= (others => '0');
 
 end generate;
 
