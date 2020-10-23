@@ -265,7 +265,7 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
 
             txresetdone_out             => txresetdone(n),
             drpclk_in                   => initclk_i,
-            rst_in                      => '0', -- FIXME: placeholder code
+            rst_in                      => gtreset_i,
 
             txuserrdy_in                => plllkdet,
             txcharisk_in                => txcharisk(N),
@@ -328,7 +328,7 @@ quad_pll_reset : entity work.gtpe7_common_reset is
     port map
     (    
         STABLE_CLOCK          => init_clk,
-        SOFT_RESET            => '0',         -- FIXME: placeholder code
+        SOFT_RESET            => gtreset_i,
         COMMON_RESET          => pllrst
    );
 end gtpe7_common_reset;
