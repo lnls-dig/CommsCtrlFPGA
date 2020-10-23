@@ -37,6 +37,20 @@ signal  crcreset            : std_logic;
 
 constant data_width         : integer := 16;
 
+component CRC32
+  generic (
+    CRC_INIT        : std_logic_vector(31 downto 0)
+  );
+  port (
+    CRCOUT          : out std_logic_vector(31 downto 0);
+    CRCCLK          : in std_logic;
+    CRCDATAVALID    : in std_logic;
+    CRCDATAWIDTH    : in std_logic_vector(2 downto 0);
+    CRCIN           : in std_logic_vector(31 downto 0);
+    CRCRESET        : in std_logic
+);
+end component;
+
 begin
 
 userclk <= not userclk after 5 ns;
