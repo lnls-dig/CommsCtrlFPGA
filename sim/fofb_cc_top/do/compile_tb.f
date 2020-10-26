@@ -10,7 +10,7 @@
 
 // FOFB CC DownStream Tester
 //-----------
-../bench/test_interface.vhd
+../../../sim/test_interface/test_interface.vhd
 ../bench/fofb_cc_v5_clk_if.vhd
 ../bench/fofb_cc_usrapp_tx.vhd
 ../bench/fofb_cc_usrapp_rx.vhd
