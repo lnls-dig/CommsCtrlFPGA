@@ -15,7 +15,9 @@ def __dirs():
             ]
 
     # Select MGT implementation based on FPGA family
-    if (target == "xilinx" and syn_device[0:4].upper()=="XC6V"):
+    if (target == "xilinx" and syn_device[0:4].upper()=="XC7A"):
+        dirs.extend(["fofb_cc_gtp7_if"]);
+    elif (target == "xilinx" and syn_device[0:4].upper()=="XC6V"):
         dirs.extend(["fofb_cc_gtx_if"]);
     elif (target == "xilinx" and syn_device[0:4].upper()=="XC5V"):
         dirs.extend(["fofb_cc_gtp_if"]);
