@@ -60,6 +60,7 @@ signal refclk               : std_logic;
 signal userclk              : std_logic;
 signal tied_to_ground       : std_logic;
 signal mgtreset             : std_logic;
+signal init_clk             : std_logic;
 
 begin
 
@@ -74,7 +75,7 @@ tied_to_ground <= '0';
 refclk_o     <= refclk;
 userclk_o    <= userclk;        -- 156.25MHz
 userclk_2x_o <= userclk;        -- 156.25MHz
-initclk_o    <= tied_to_ground;
+initclk_o    <= init_clk;
 gtreset_o    <= tied_to_ground;
 mgtreset_o   <= mgtreset;
 
@@ -86,6 +87,13 @@ refclk_ibufds : IBUFDS_GTE2
         IB  => refclk_n_i,
         ODIV2   => open,
         CEB     => '0'
+    );
+
+-- Initial clock from GTP reference clocks via BUFG
+refclk_bufg : BUFG
+    port map (
+        I => refclk,
+        O => init_clk
     );
 
 user_clock_bufg : BUFG
