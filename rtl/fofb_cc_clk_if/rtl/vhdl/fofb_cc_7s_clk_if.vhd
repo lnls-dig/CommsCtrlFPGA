@@ -58,14 +58,10 @@ architecture rtl of fofb_cc_clk_if is
 -----------------------------------------------
 signal refclk               : std_logic;
 signal userclk              : std_logic;
-signal tied_to_ground       : std_logic;
 signal mgtreset             : std_logic;
 signal init_clk             : std_logic;
 
 begin
-
---  Static signal Assigments
-tied_to_ground <= '0';
 
 ----------------------
 -- 7-series Interface
@@ -76,7 +72,7 @@ refclk_o     <= refclk;
 userclk_o    <= userclk;        -- 156.25MHz
 userclk_2x_o <= userclk;        -- 156.25MHz
 initclk_o    <= init_clk;
-gtreset_o    <= tied_to_ground;
+gtreset_o    <= gtreset_i;
 mgtreset_o   <= mgtreset;
 
 -- Differential clock input for 7-series GTP
@@ -102,22 +98,7 @@ user_clock_bufg : BUFG
         O => userclk
     );
 
--- Initial reset is based on external reset
-process(gtreset_i, userclk)
-    variable cnt    : unsigned(4 downto 0) := "00000";
-begin
-    if (gtreset_i = '1') then
-        mgtreset <= '1';
---    elsif rising_edge(refclk) then
-    elsif rising_edge(userclk) then
-        if (cnt(4) = '1') then
-            mgtreset <= '0';
-        else
-            cnt := cnt + 1;
-            mgtreset <= '1';
-        end if;
-    end if;
-end process;
+mgtreset <= not plllkdet_i;
 
 
 

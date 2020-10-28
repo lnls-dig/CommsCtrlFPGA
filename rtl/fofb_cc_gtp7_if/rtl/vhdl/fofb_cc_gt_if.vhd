@@ -158,6 +158,8 @@ rx_dat_val_o <= rx_dat_val_buffer;
 linksup_o <= linksup_buffer;
 link_partner_o <= link_partner_buffer;
 
+plllkdet_o <= plllkdet;
+
 userclk <= userclk_i;
 resetdone <= rxresetdone and txresetdone;
 
