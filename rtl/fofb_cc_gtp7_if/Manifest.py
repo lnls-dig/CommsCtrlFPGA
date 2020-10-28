@@ -1,0 +1,15 @@
+files = [
+    "rtl/vhdl/fofb_cc_gt_if.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_crc32.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_lane.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_rxcrc.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_rx_ll.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_tile.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_tile_wrapper.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_txcrc.vhd",
+    "rtl/vhdl/fofb_cc_gtp7_tx_ll.vhd",
+    "rtl/vhdl/gtpe7_common.vhd",
+    "rtl/vhdl/gtpe7_reset/gtpe7_common_reset.vhd",
+    "rtl/vhdl/gtpe7_reset/gtpe7_gtrxreset_seq.vhd",
+    "rtl/vhdl/gtpe7_reset/gtpe7_sync_block.vhd",
+]
