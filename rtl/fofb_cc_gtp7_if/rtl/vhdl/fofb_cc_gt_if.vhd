@@ -97,8 +97,14 @@ signal txoutclk             : std_logic_vector(3 downto 0);
 
 signal gtrefclk0            : std_logic;
 signal gtrefclk1            : std_logic;
-signal pll0refclksel        : std_logic;
+signal pll0refclksel        : std_logic_vector(2 downto 0);
 signal pllrst               : std_logic;
+signal ref_clk              : std_logic;
+
+signal pll0clk              : std_logic; 
+signal pll0refclk           : std_logic;
+signal pll1clk              : std_logic;
+signal pll1refclk           : std_logic;
 
 signal loopback             : std_logic_2d_3(3 downto 0);
 signal powerdown            : std_logic_2d_2(3 downto 0);
@@ -239,10 +245,10 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
             GT_SIM_GTRESET_SPEEDUP      => SIM_GTPRESET_SPEEDUP
         )
         port map (
-            pll0clk_in                  => pll0clk;
-            pll0refclk_in               => pll0refclk;
-            pll1clk_in                  => pll1clk_in;
-            pll1refclk_in               => pll1refclk;
+            pll0clk_in                  => pll0clk,
+            pll0refclk_in               => pll0refclk,
+            pll1clk_in                  => pll1clk,
+            pll1refclk_in               => pll1refclk,
             rxuserrdy_in                => plllkdet,
             loopback_in                 => loopback(N),
             rxpd_in                     => powerdown(N),
@@ -299,10 +305,10 @@ quad_pll : entity work.gtpe7_common
         PLL0RESET_IN          => pllrst,
         PLL0REFCLKSEL_IN      => pll0refclksel,
         PLL0PD_IN             => '0',
-        PLL1OUTCLK_OUT        => pll1clk_in,
+        PLL1OUTCLK_OUT        => pll1clk,
         PLL1OUTREFCLK_OUT     => pll1refclk,
         GTREFCLK1_IN          => gtrefclk1,
-        GTREFCLK0_IN          => gtrefclk0,
+        GTREFCLK0_IN          => gtrefclk0
     );
 
 refclk0_gen : if GTP7_IF_REFCLK = "REFCLK0" generate
@@ -320,18 +326,17 @@ end generate;
 --
 -- GTP Quad PLL reset logic (AR #43482)
 --
-quad_pll_reset : entity work.gtpe7_common_reset is 
+quad_pll_reset : entity work.gtpe7_common_reset
     generic map
     (
         STABLE_CLOCK_PERIOD   => 8
-    );
+    )
     port map
     (    
-        STABLE_CLOCK          => init_clk,
+        STABLE_CLOCK          => initclk_i,
         SOFT_RESET            => gtreset_i,
         COMMON_RESET          => pllrst
    );
-end gtpe7_common_reset;
 
 --
 -- Conditional chipscope generation

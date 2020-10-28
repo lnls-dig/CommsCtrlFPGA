@@ -83,9 +83,9 @@ refclk_ibufds : IBUFDS_GTE2
     port map (
         O   => refclk,
         I   => refclk_p_i,
-        IB  => refclk_n_i
+        IB  => refclk_n_i,
         ODIV2   => open,
-        CEB     => '0',
+        CEB     => '0'
     );
 
 user_clock_bufg : BUFG
