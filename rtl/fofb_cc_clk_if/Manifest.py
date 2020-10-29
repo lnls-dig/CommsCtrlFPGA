@@ -2,7 +2,7 @@ files = []
 
 if (target == "xilinx" and syn_device[0:4].upper()=="XC7A"):
     files.extend(["rtl/vhdl/fofb_cc_7s_clk_if.vhd"]);
-if (target == "xilinx" and syn_device[0:4].upper()=="XC6V"):
+elif (target == "xilinx" and syn_device[0:4].upper()=="XC6V"):
     files.extend(["rtl/vhdl/fofb_cc_v6_clk_if.vhd"]);
 elif (target == "xilinx" and syn_device[0:4].upper()=="XC5V"):
     files.extend(["rtl/vhdl/fofb_cc_v5_clk_if.vhd"]);
