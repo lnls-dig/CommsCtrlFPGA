@@ -17,6 +17,7 @@ elif (target == "xilinx" and syn_device[0:4].upper()=="XC7A"):
         files.extend(["coregen/artix7/fofb_cc_rx_fifo_sim_netlist.vhdl"]);
     elif (action == "synthesis"):
         files.extend(["coregen/artix7/fofb_cc_rx_fifo.vhd"]);
+        files.extend(["coregen/artix7/fofb_cc_rx_fifo.xci"]);
     else:
         sys.exit("ERROR: fofb_cc_rx_fifo: Action not supported: {}".format(action))
 else:
