@@ -104,6 +104,17 @@ modelsim.ini
 *.jou
 *.log
 
+# Vivado IP Core generator
+/rtl/fofb_cc_rx_fifo/coregen/artix7
+!/rtl/fofb_cc_rx_fifo/coregen/artix7/fofb_cc_rx_fifo.vhd
+!/rtl/fofb_cc_rx_fifo/coregen/artix7/fofb_cc_rx_fifo.xci
+!/rtl/fofb_cc_rx_fifo/coregen/artix7/fofb_cc_tx_fifo_sim_netlist.vhdl
+
+/rtl/fofb_cc_tx_fifo/coregen/artix7
+!/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo.vhd
+!/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo.xci
+!/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo_sim_netlist.vhdl
+
 ######################
 # HDLmake
 ######################
