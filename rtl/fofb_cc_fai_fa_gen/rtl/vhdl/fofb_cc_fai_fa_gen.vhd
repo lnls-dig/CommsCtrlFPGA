@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 
 entity fofb_cc_fai_fa_gen is
     generic (
-        g_FAI_DW                : integer := 16
+        FAI_DW                : integer := 16
     );
     port (
         -- Fast acquisition data interface
@@ -14,7 +14,7 @@ entity fofb_cc_fai_fa_gen is
         -- Fast acquisition data interface
         fai_fa_block_start_o    : out std_logic;
         fai_fa_data_valid_o     : out std_logic;
-        fai_fa_d_o              : out std_logic_vector(g_FAI_DW-1 downto 0);
+        fai_fa_d_o              : out std_logic_vector(FAI_DW-1 downto 0);
         -- Flags
         fai_enable_i            : in  std_logic;
         fai_trigger_i           : in  std_logic;
@@ -28,7 +28,7 @@ signal counter_10kHz            : integer;
 signal puls_10kHz               : std_logic;
 signal counter5bit              : unsigned(4 downto 0);
 signal counter5bit_ena          : std_logic;
-signal counter_fai_dw           : unsigned(g_FAI_DW-1 downto 0);
+signal counter_fai_dw           : unsigned(FAI_DW-1 downto 0);
 signal fai_trigger              : std_logic;
 signal fai_trigger_rise         : std_logic;
 signal fai_armed                : std_logic;
