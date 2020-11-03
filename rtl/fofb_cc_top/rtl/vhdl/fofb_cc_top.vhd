@@ -79,7 +79,7 @@ entity fofb_cc_top is
         rcb_dat_o               : out std_logic_vector(31 downto 0);
         fai_rxfifo_clear        : in  std_logic;
         fai_txfifo_clear        : in  std_logic;
-        -- serial I/Os for eight RocketIOs on the Libera 
+        -- serial I/Os for eight RocketIOs on the Libera
         fai_rio_rdp_i           : in  std_logic_vector(LANE_COUNT-1 downto 0);
         fai_rio_rdn_i           : in  std_logic_vector(LANE_COUNT-1 downto 0);
         fai_rio_tdp_o           : out std_logic_vector(LANE_COUNT-1 downto 0);
@@ -133,7 +133,7 @@ signal rxf_rd_en            : std_logic_vector(LANE_COUNT-1 downto 0);
 signal rxf_empty            : std_logic_vector(LANE_COUNT-1 downto 0);
 signal rxf_empty_n          : std_logic_vector(LANE_COUNT-1 downto 0);
 signal rxf_full             : std_logic_vector(LANE_COUNT-1 downto 0);
--- frame status 
+-- frame status
 signal timeframe_count      : std_logic_vector(31 downto 0) := (others=>'0');
 signal link_partners        : std_logic_2d_10(3 downto 0);
 signal timeframe_dly        : std_logic_vector(15 downto 0);
@@ -142,8 +142,8 @@ signal linkup               : std_logic_vector(7 downto 0);
 signal rx_linkup            : std_logic_vector(3 downto 0);
 signal tx_linkup            : std_logic_vector(3 downto 0);
 -- system reset
-signal rx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0); 
-signal tx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0); 
+signal rx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
+signal tx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
 -- arbmux module connections
 signal arbmux_dout          : std_logic_vector((32*PacketSize-1) downto 0);
 signal arbmux_dout_rdy      : std_logic;
@@ -448,7 +448,7 @@ fofb_fod_dat_o <= txf_din;
 fofb_fod_dat_val_o <= txf_wr_en;
 
 -------------------------------------------------
--- tx fifo generation for each mgt channel 
+-- tx fifo generation for each mgt channel
 -- 128-bit input/16-bit output
 -------------------------------------------------
 TX_FIFO_GEN: for N in 0 to (LANE_COUNT - 1) generate
@@ -507,7 +507,7 @@ port map(
     rx_max_data_count_i     => rx_max_data_count,
     tx_max_data_count_i     => tx_max_data_count,
     coeff_x_addr_i          => coeff_x_addr_i,
-    coeff_x_dat_o           => coeff_x_dat_o, 
+    coeff_x_dat_o           => coeff_x_dat_o,
     coeff_y_addr_i          => coeff_y_addr_i,
     coeff_y_dat_o           => coeff_y_dat_o,
     golden_x_orb_o          => golden_orb_x,
