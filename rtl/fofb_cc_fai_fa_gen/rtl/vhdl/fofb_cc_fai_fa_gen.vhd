@@ -18,6 +18,8 @@ entity fofb_cc_fai_fa_gen is
         -- Flags
         fai_enable_i            : in  std_logic;
         fai_trigger_i           : in  std_logic;
+        -- keep signal to '1' to keep generating internal 10 kHz trigger
+        fai_trigger_internal_i  : in  std_logic := '0';
         fai_armed_o             : out std_logic
 );
 end fofb_cc_fai_fa_gen;
@@ -66,7 +68,7 @@ begin
         fai_trigger <= fai_trigger_i;
         fai_trigger_rise <= fai_trigger_i and not fai_trigger;
 
-        if (fai_trigger_rise = '1') then
+        if (fai_trigger_rise = '1' or fai_trigger_internal_i = '1') then
             fai_armed <= '1';
         elsif (fai_enable_i = '0') then
             fai_armed <= '0';
