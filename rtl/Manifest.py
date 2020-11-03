@@ -12,6 +12,7 @@ def __dirs():
               "fofb_cc_sync",
               "fofb_cc_top",
               "fofb_cc_tx_fifo",
+              "fofb_cc_fai_fa_gen",
             ]
 
     # Select MGT implementation based on FPGA family
