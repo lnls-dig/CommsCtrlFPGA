@@ -3,6 +3,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity fofb_cc_fai_fa_gen is
+    generic (
+        g_FAI_DW                : integer := 16
+    );
     port (
         -- Fast acquisition data interface
         adcclk_i                : in  std_logic;
@@ -11,7 +14,7 @@ entity fofb_cc_fai_fa_gen is
         -- Fast acquisition data interface
         fai_fa_block_start_o    : out std_logic;
         fai_fa_data_valid_o     : out std_logic;
-        fai_fa_d_o              : out std_logic_vector(31 downto 0);
+        fai_fa_d_o              : out std_logic_vector(g_FAI_DW-1 downto 0);
         -- Flags
         fai_enable_i            : in  std_logic;
         fai_trigger_i           : in  std_logic;
@@ -25,7 +28,7 @@ signal counter_10kHz            : integer;
 signal puls_10kHz               : std_logic;
 signal counter5bit              : unsigned(4 downto 0);
 signal counter5bit_ena          : std_logic;
-signal counter32bit             : unsigned(31 downto 0);
+signal counter_fai_dw           : unsigned(g_FAI_DW-1 downto 0);
 signal fai_trigger              : std_logic;
 signal fai_trigger_rise         : std_logic;
 signal fai_armed                : std_logic;
@@ -83,13 +86,13 @@ begin
         end if;
 
         if (puls_10kHz = '1') then
-            counter32bit <= counter32bit + 1;
+            counter_fai_dw <= counter_fai_dw + 1;
         end if;
     end if;
 end process;
 
 fai_fa_block_start_o <= counter5bit_ena;
 fai_fa_data_valid_o <= counter5bit_ena;
-fai_fa_d_o <= std_logic_vector(SHIFT_LEFT(counter32bit, to_integer(unsigned(data_sel_i))));
+fai_fa_d_o <= std_logic_vector(SHIFT_LEFT(counter_fai_dw, to_integer(unsigned(data_sel_i))));
 
 end rtl;
