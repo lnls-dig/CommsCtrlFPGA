@@ -99,7 +99,6 @@ signal gtrefclk0            : std_logic;
 signal gtrefclk1            : std_logic;
 signal pll0refclksel        : std_logic_vector(2 downto 0);
 signal pllrst               : std_logic;
-signal ref_clk              : std_logic;
 
 signal pll0clk              : std_logic; 
 signal pll0refclk           : std_logic;
@@ -314,14 +313,14 @@ quad_pll : entity work.gtpe7_common
     );
 
 refclk0_gen : if GTP7_IF_REFCLK = "REFCLK0" generate
-    gtrefclk0     <= ref_clk;
+    gtrefclk0     <= refclk_i;
     gtrefclk1     <= '0';
     pll0refclksel <= "001";
 end generate;
 
 refclk1_gen : if GTP7_IF_REFCLK = "REFCLK1" generate
     gtrefclk0     <= '0';
-    gtrefclk1     <= ref_clk;
+    gtrefclk1     <= refclk_i;
     pll0refclksel <= "010";
 end generate;
 
