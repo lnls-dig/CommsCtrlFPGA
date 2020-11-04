@@ -88,7 +88,7 @@ entity fofb_cc_gt_if is
     );
 end fofb_cc_gt_if;
 
-architecture rtl of fofb_cc_gt_if is 
+architecture rtl of fofb_cc_gt_if is
 
 signal clkin                : std_logic := '0';
 signal plllkdet             : std_logic;
@@ -100,7 +100,7 @@ signal gtrefclk1            : std_logic;
 signal pll0refclksel        : std_logic_vector(2 downto 0);
 signal pllrst               : std_logic;
 
-signal pll0clk              : std_logic; 
+signal pll0clk              : std_logic;
 signal pll0refclk           : std_logic;
 signal pll1clk              : std_logic;
 signal pll1refclk           : std_logic;
@@ -333,7 +333,7 @@ quad_pll_reset : entity work.gtpe7_common_reset
         STABLE_CLOCK_PERIOD   => 8
     )
     port map
-    (    
+    (
         STABLE_CLOCK          => initclk_i,
         SOFT_RESET            => gtreset_i,
         COMMON_RESET          => pllrst
