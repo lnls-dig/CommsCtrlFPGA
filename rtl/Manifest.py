@@ -32,7 +32,7 @@ def __dirs():
 
     # Select Chipscope implementation based on FPGa family. Probably family
     # independent?
-    if (target == "xilinx" and syn_device[0:4].upper()=="XC7"):
+    if (target == "xilinx" and syn_device[0:3].upper()=="XC7"):
         dirs.extend(["chipscope/7series"]);
 
     return dirs
