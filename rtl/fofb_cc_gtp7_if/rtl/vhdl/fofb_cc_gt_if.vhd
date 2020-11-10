@@ -379,6 +379,7 @@ data(141 downto 140) <= txcharisk(2);
 data(143 downto 142) <= txcharisk(3);
 
 data(147 downto 144) <= resetdone;
+data(150 downto 148) <= (others => '0');
 data(151)            <= plllkdet;
 data(161 downto 152) <= link_partner_buffer(0);
 data(171 downto 162) <= link_partner_buffer(2);
