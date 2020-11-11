@@ -330,7 +330,7 @@ end generate;
 quad_pll_reset : entity work.gtpe7_common_reset
     generic map
     (
-        STABLE_CLOCK_PERIOD   => 8
+        STABLE_CLOCK_PERIOD   => 6
     )
     port map
     (
