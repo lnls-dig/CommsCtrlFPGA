@@ -48,7 +48,8 @@ entity fofb_cc_top is
         -- BPM Data Interface Parameters
         BPMS                    : integer := 1;
         FAI_DW                  : integer := 16;
-        DMUX                    : integer := 2
+        DMUX                    : integer := 2;
+        USE_CHIPSCOPE           : boolean := false
 
     );
     port (
@@ -116,7 +117,7 @@ architecture structural of fofb_cc_top is
 
 -- chipscope
 signal control              : std_logic_vector(35 downto 0);
-signal data                 : std_logic_vector(127 downto 0);
+signal data                 : std_logic_vector(255 downto 0);
 signal trig0                : std_logic_vector(7 downto 0);
 --  tx fifo
 signal txf_din              : std_logic_vector((32*PacketSize-1) downto 0);
@@ -562,23 +563,42 @@ port map(
     timestamp_value_o       => timestamp_val
 );
 
---trig0(0) <= fofb_cc_enable;
---trig0(7 downto 1) <= (others => '0');
---
---data(3 downto 0) <= fai_cfg_val_i(3 downto 0);
---data(127 downto 4) <= (others => '0');
---
---ila_inst : ila
---port map (
---    control         => control,
---    clk             => userclk,
---    data            => data,
---    trig0           => trig0
---);
---
---icon_inst : icon
---port map (
---    control0        => control
---);
+CSCOPE_GEN : if (USE_CHIPSCOPE = true) generate
+
+ila_core_inst : entity work.ila_t8_d256_s16384
+port map (
+  clk             => userclk,
+  probe0          => data,
+  probe1          => trig0
+);
+
+trig0(0)          <= fai_fa_block_start_i;
+trig0(1)          <= fai_fa_data_valid_i;
+trig0(2)          <= timeframe_valid;
+trig0(3)          <= timeframe_start;
+trig0(4)          <= timeframe_end;
+trig0(5)          <= txf_wr_en(0);
+trig0(6)          <= int_timeframe_start;
+trig0(7)          <= '0';
+
+data(15 downto 0) <= fai_fa_d_i;
+data(16)          <= fai_fa_block_start_i;
+data(17)          <= fai_fa_data_valid_i;
+data(18)          <= txf_wr_en(0);
+data(19)          <= int_timeframe_start;
+
+data(31 downto 20) <= (others => '0');
+
+data(63 downto 32)   <= txf_din(31 downto 0);
+data(95 downto 64)   <= txf_din(63 downto 32);
+data(127 downto 96)  <= txf_din(95 downto 64);
+data(159 downto 128) <= txf_din(127 downto 96);
+
+data(191 downto 160) <= bpm_cc_xpos(0);
+data(223 downto 192) <= bpm_cc_ypos(0);
+
+data(255 downto 224) <= (others => '0');
+
+end generate;
 
 end structural;
