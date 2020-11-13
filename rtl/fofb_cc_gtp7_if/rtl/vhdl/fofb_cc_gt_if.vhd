@@ -355,8 +355,10 @@ trig0(0)           <= timeframe_start_i;
 trig0(1)           <= rxreset(0);
 trig0(2)           <= txreset(0);
 trig0(3)           <= rxbuferr(0);
-trig0(7 downto 4)  <= (others => '0');
-
+trig0(4)           <= gtreset_i;
+trig0(5)           <= mgtreset_i;
+trig0(6)           <= pllrst;
+trig0(7)           <= '0';
 
 data(15 downto 0)  <= rxdata(0);
 data(31 downto 16) <= rxdata(1);
@@ -392,7 +394,18 @@ data(181)            <= timeframe_valid_i;
 data(185 downto 182) <= rxrealign;
 data(189 downto 186) <= rxbuferr;
 
-data(255 downto 190)  <= (others => '0');
+data(190)             <= gtreset_i;
+data(191)             <= mgtreset_i;
+data(192)             <= pllrst;
+data(193)             <= rxreset(0);
+data(194)             <= txreset(0);
+data(195)             <= rxreset(1);
+data(196)             <= txreset(1);
+data(197)             <= rxreset(2);
+data(198)             <= txreset(2);
+data(199)             <= rxreset(3);
+data(200)             <= txreset(3);
+data(255 downto 201)  <= (others => '0');
 
 end generate;
 
