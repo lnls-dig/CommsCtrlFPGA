@@ -30,7 +30,7 @@ entity fofb_cc_gtp7_rx_ll is
         powerdown_i         : in  std_logic;
         rxelecidlereset_i   : in  std_logic;
         -- status information
-        rx_link_up_o        : out std_logic; 
+        rx_link_up_o        : out std_logic;
         rxpck_cnt_o         : out std_logic_vector(15 downto 0);
         -- tx/rx state machine status for reset operation
         rx_sm_busy_o        : out std_logic;
@@ -71,7 +71,7 @@ architecture rtl of fofb_cc_gtp7_rx_ll is
 -- RocketIO protocol symbols
 constant IDLE           : std_logic_vector (15 downto 0) :=X"BC95"; --/K28.5
 constant SOP            : std_logic_vector (15 downto 0) :=X"5CFB"; --/K28.2/K27.7/
-constant EOP            : std_logic_vector (15 downto 0) :=X"FDFE"; --/K29.7/K30.7/ 
+constant EOP            : std_logic_vector (15 downto 0) :=X"FDFE"; --/K29.7/K30.7/
 constant SENDID_L       : std_logic_vector (7 downto 0)  := X"F7";  --/K23.7/
 constant SENDID_H       : std_logic_vector (7 downto 0)  := X"1C";  --/K28.0/
 
@@ -122,7 +122,7 @@ begin
 -- Output assignements
 rxpck_cnt_o <= std_logic_vector(rxpck_cnt);
 rx_link_up_o <= rx_link_up;
-rx_harderror_o <= rx_harderror; 
+rx_harderror_o <= rx_harderror;
 rx_softerror_o <= rx_softerror;
 rx_frameerror_o<= rx_frameerror;
 link_partner_o <= link_partner when (rx_link_up = '1') else (others => '0');
@@ -133,7 +133,7 @@ link_partner_o <= link_partner when (rx_link_up = '1') else (others => '0');
 rx_init : process(mgtclk_i)
 begin
 if (mgtclk_i'event and mgtclk_i = '1') then
-    if (mgtreset_i = '1' or rx_harderror = '1' or powerdown_i = '1' 
+    if (mgtreset_i = '1' or rx_harderror = '1' or powerdown_i = '1'
             or rxelecidlereset_i = '1'
             or counter_odd_word_rx(3) = '1') then
         rx_link_up          <= '0';
@@ -198,8 +198,8 @@ end if;
 end process;
 
 ------------------------------------------------------------
--- Link partners are detected in each time frame. X"3FF" 
--- indicates that there is no connection on this particular 
+-- Link partners are detected in each time frame. X"3FF"
+-- indicates that there is no connection on this particular
 -- channel.
 ------------------------------------------------------------
 process(mgtclk_i)
@@ -265,7 +265,7 @@ begin
 end process;
 
 ------------------------------------------------------------
--- CRC32 calculation, if CRC is not valid, data is not 
+-- CRC32 calculation, if CRC is not valid, data is not
 -- written to rx fifo.
 ------------------------------------------------------------
 rx_crc : entity work.fofb_cc_gtp7_rxcrc
@@ -395,7 +395,7 @@ begin
             -- Received packet counter is with every packet
             if (timeframe_start_i = '1') then
                 rxpck_cnt <= X"0000";
-            -- Delay state since timeframe_start_i is extracted from the first 
+            -- Delay state since timeframe_start_i is extracted from the first
             -- packet in PMC design
             elsif (rx_data_state = rx_wait_1) then
                 rxpck_cnt <= rxpck_cnt + 1;

@@ -65,7 +65,7 @@ port (
 
     -- RX FIFO interface
     rxf_full_i              : in  std_logic;
-    rx_dat_o                : out std_logic_vector (15 downto 0); 
+    rx_dat_o                : out std_logic_vector (15 downto 0);
     rx_dat_val_o            : out std_logic;
 
     -- GTP_DUAL Tile interface

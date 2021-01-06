@@ -39,7 +39,7 @@ entity fofb_cc_gtp7_tx_ll is
         timeframe_valid_i       : in std_logic;
         bpmid_i                 : in  std_logic_vector(NodeW-1 downto 0);
         -- status information
-        tx_link_up_o            : out std_logic; 
+        tx_link_up_o            : out std_logic;
         txpck_cnt_o             : out std_logic_vector(15 downto 0);
         -- tx/rx state machine status for reset operation
         tx_sm_busy_o            : out std_logic;
@@ -69,7 +69,7 @@ architecture rtl of fofb_cc_gtp7_tx_ll is
 -- RocketIO protocol symbols
 constant IDLE           : std_logic_vector (15 downto 0) :=X"BC95"; --/K28.5
 constant SOP            : std_logic_vector (15 downto 0) :=X"5CFB"; --/K28.2/K27.7/
-constant EOP            : std_logic_vector (15 downto 0) :=X"FDFE"; --/K29.7/K30.7/ 
+constant EOP            : std_logic_vector (15 downto 0) :=X"FDFE"; --/K29.7/K30.7/
 constant SENDID_L       : std_logic_vector (7 downto 0)  := X"F7";   --/K23.7/
 constant SENDID_H       : std_logic_vector (7 downto 0)  := X"1C";   --/K28.0/
 
