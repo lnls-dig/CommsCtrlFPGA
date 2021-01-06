@@ -115,6 +115,9 @@ modelsim.ini
 !/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo.xci
 !/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo_sim_netlist.vhdl
 
+/rtl/chipscope/7series/ila_t8_d256_s16384
+/rtl/chipscope/7series/vio_din2_w64_dout2_w64
+
 ######################
 # HDLmake
 ######################
