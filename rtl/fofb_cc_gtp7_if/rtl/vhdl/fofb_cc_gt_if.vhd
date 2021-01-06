@@ -32,6 +32,7 @@ entity fofb_cc_gt_if is
         refclk_i                : in  std_logic;
         mgtreset_i              : in  std_logic;
         initclk_i               : in  std_logic;
+        sysclk_i                : in  std_logic;
 
         -- system interface
         gtreset_i               : in  std_logic;
@@ -190,6 +191,7 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
         port map (
             userclk_i               => userclk,
             mgtreset_i              => mgtreset_i,
+            sysclk_i                => sysclk_i,
             gtp_resetdone_i         => resetdone(N),
             rxreset_o               => rxreset(N),
             txreset_o               => txreset(N),

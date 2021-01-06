@@ -22,8 +22,9 @@ entity fofb_cc_gtp7_rx_ll is
         RX_IDLE_NUM         : natural := 13    --4095 cc
     );
     port (
-        mgtclk_i            : in  std_logic; 
-        mgtreset_i          : in  std_logic; 
+        mgtclk_i            : in  std_logic;
+        mgtreset_i          : in  std_logic;
+        sysclk_i            : in  std_logic;
         gtp_resetdone_i     : in  std_logic;
         rxreset_o           : out std_logic;
         powerdown_i         : in  std_logic;

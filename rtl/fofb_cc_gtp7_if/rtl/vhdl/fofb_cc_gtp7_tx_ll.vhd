@@ -30,6 +30,7 @@ entity fofb_cc_gtp7_tx_ll is
     port (
         mgtclk_i                : in  std_logic;
         mgtreset_i              : in  std_logic;
+        sysclk_i                : in  std_logic;
         gtp_resetdone_i         : in  std_logic;
         txreset_o               : out std_logic;
         powerdown_i             : in  std_logic;
@@ -73,7 +74,7 @@ constant SENDID_L       : std_logic_vector (7 downto 0)  := X"F7";   --/K23.7/
 constant SENDID_H       : std_logic_vector (7 downto 0)  := X"1C";   --/K28.0/
 
 -- state machine declarations
-type tx_state_type is (tx_rst, tx_wait_resetdone, tx_sync, tx_idle, tx_sop, tx_payload, tx_eop);
+type tx_state_type is (tx_wait_resetdone, tx_sync, tx_idle, tx_sop, tx_payload, tx_eop);
 signal tx_state                 : tx_state_type;
 
 signal txf_rd_en                : std_logic;
@@ -96,7 +97,11 @@ signal txpck_cnt                : unsigned(15 downto 0);
 signal tx_harderror             : std_logic;
 signal send_id                  : std_logic;
 signal send_id_prev             : std_logic;
-
+signal mgtreset_sysclk_sync     : std_logic;
+signal tx_harderror_sysclk_sync : std_logic;
+signal powerdown_sysclk_sync    : std_logic;
+signal txreset_req_done         : std_logic;
+signal txreset_req_done_sync_mgtclk  : std_logic;
 
 begin
 
@@ -197,6 +202,63 @@ begin
 end process;
 
 ------------------------------------------
+-- TX reset
+------------------------------------------
+
+-- Sync signals from mgtclk_i to sysclk_i. These are "long" (>5 src clock periods)
+-- pulses and the clocks are not "too" different in frequeneyc (<50%) so we
+-- shouldn't experience problems with simple 2FF synchronizers.
+sync_mgtreset : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => mgtreset_i,
+        dat_o       => mgtreset_sysclk_sync
+    );
+
+sync_tx_harderror : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => tx_harderror,
+        dat_o       => tx_harderror_sysclk_sync
+    );
+
+sync_powerdown : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => powerdown_i,
+        dat_o       => powerdown_sysclk_sync
+    );
+
+gen_tx_reset : process(sysclk_i)
+begin
+    if (sysclk_i'event and sysclk_i = '1') then
+
+        if (mgtreset_sysclk_sync = '1' or tx_harderror_sysclk_sync = '1' or
+            powerdown_sysclk_sync = '1') then
+            counter4bit         <= "0000";
+            txreset_o           <= '0';
+            txreset_req_done    <= '0';
+        else
+            -- RocketIO TX reset for 7 clock cycles
+            if (counter4bit(3) = '1') then
+                txreset_req_done <= '1';
+                txreset_o <= '0';
+            else
+                counter4bit <= counter4bit + 1;
+                txreset_o <= '1';
+            end if;
+        end if;
+    end if;
+end process;
+
+sync_txreset_req : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => mgtclk_i,
+        dat_i       => txreset_req_done,
+        dat_o       => txreset_req_done_sync_mgtclk
+    );
+
+------------------------------------------
 -- TX state machine
 ------------------------------------------
 gen_tx_data : process(mgtclk_i)
@@ -204,28 +266,17 @@ begin
     if (mgtclk_i'event and mgtclk_i = '1') then
 
         if (mgtreset_i = '1' or tx_harderror = '1' or powerdown_i = '1') then
-            tx_state            <= tx_rst;
+            tx_state            <= tx_wait_resetdone;
             tx_d_o              <= X"0000";
             txcharisk_o         <= "00";
             tx_link_up_o        <= '0';
             counter_idle_tx     <= (others => '0');
             send_id_cnt         <=  (others => '0');
             tx_sm_busy_o        <= '0';
-            txreset_o           <= '0';
             error_detect_ena    <= '0';
-            counter4bit         <= "0000";
         else
+
             case tx_state is
-
-                -- RocketIO TX reset for 7 clock cycles
-                when tx_rst  =>
-                    txreset_o <= '1';
-                    if (counter4bit(3) = '1') then
-                        tx_state <= tx_wait_resetdone;
-                        txreset_o <= '0';
-                    end if;
-
-                    counter4bit <= counter4bit + 1;
 
                 -- Wait for GTP resetdone signal
                 when tx_wait_resetdone  =>

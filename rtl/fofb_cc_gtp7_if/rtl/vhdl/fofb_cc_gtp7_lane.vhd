@@ -27,6 +27,7 @@ port (
     -- clocks and resets
     userclk_i               : in  std_logic;
     mgtreset_i              : in  std_logic;
+    sysclk_i                : in  std_logic;
     gtp_resetdone_i         : in  std_logic;
     rxreset_o               : out std_logic;
     txreset_o               : out std_logic;
@@ -138,6 +139,7 @@ tx_ll : entity work.fofb_cc_gtp7_tx_ll
     port map (
         mgtclk_i            => userclk_i,
         mgtreset_i          => mgtreset_i,
+        sysclk_i            => sysclk_i,
         gtp_resetdone_i     => gtp_resetdone_i,
         txreset_o           => txreset_o,
         powerdown_i         => powerdown_i,
@@ -167,6 +169,7 @@ rx_ll : entity work.fofb_cc_gtp7_rx_ll
     port map (
         mgtclk_i            => userclk_i,
         mgtreset_i          => mgtreset_i,
+        sysclk_i            => sysclk_i,
         gtp_resetdone_i     => gtp_resetdone_i,
         rxreset_o           => rxreset_o,
         powerdown_i         => powerdown_i,
