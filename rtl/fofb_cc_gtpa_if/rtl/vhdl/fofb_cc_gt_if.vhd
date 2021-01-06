@@ -45,7 +45,9 @@ port (
 
     -- Main clocks and resets (NOT USED for V2P MGT Interface)
     initclk_i               : in  std_logic;
+    sysclk_i                : in  std_logic := '0';
     gtreset_i               : in  std_logic;
+
     userclk_i               : in  std_logic;
     userclk_2x_i            : in  std_logic;
     txoutclk_o              : out std_logic;

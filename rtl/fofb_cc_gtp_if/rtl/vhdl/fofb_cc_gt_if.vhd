@@ -39,6 +39,7 @@ port (
     refclk_i                : in  std_logic;
     mgtreset_i              : in  std_logic;
     initclk_i               : in  std_logic;
+    sysclk_i                : in  std_logic := '0';
 
     -- system interface
     gtreset_i               : in  std_logic;
