@@ -79,7 +79,7 @@ constant SENDID_H       : std_logic_vector (7 downto 0)  := X"1C";  --/K28.0/
 constant RX_DELAY_NUM   : natural := 4;
 constant SOFT_ERR_NUM   : natural := 8;
 
-type rx_state_type is (rx_rst, rx_wait_resetdone, rx_idle, rx_synced);
+type rx_state_type is (rx_wait_resetdone, rx_idle, rx_synced);
 signal rx_state         : rx_state_type;
 
 type rx_data_state_type is (rx_crc_wait, rx_wait_0, rx_wait_1, rx_write_data);
@@ -91,6 +91,7 @@ signal rx_dl                    : std_logic_2d_16(RX_DELAY_NUM-1 downto 0) := (o
 
 signal counter_idle_rx          : unsigned(RX_IDLE_NUM-1 downto 0);
 signal counter_odd_word_rx      : unsigned(3 downto 0);
+signal counter_odd_word_rx_msb  : std_logic;
 signal rx_link_up               : std_logic;
 signal payload_word_cnt         : unsigned(4 downto 0);
 signal rx_d_val                 : std_logic;
@@ -117,6 +118,12 @@ signal pmc_timeframe_val_lt     : std_logic_vector(15 downto 0);
 signal tfs_bit_lt               : std_logic;
 signal link_partner             : std_logic_vector(9 downto 0);
 
+signal mgtreset_sysclk_sync                : std_logic;
+signal rx_harderror_sysclk_sync            : std_logic;
+signal powerdown_sysclk_sync               : std_logic;
+signal rxelecidlereset_sysclk_sync         : std_logic;
+signal counter_odd_word_rx_msb_sysclk_sync : std_logic;
+
 begin
 
 -- Output assignements
@@ -127,34 +134,89 @@ rx_softerror_o <= rx_softerror;
 rx_frameerror_o<= rx_frameerror;
 link_partner_o <= link_partner when (rx_link_up = '1') else (others => '0');
 
+------------------------------------------
+-- RX reset
+------------------------------------------
+
+-- Sync signals from mgtclk_i to sysclk_i. These are "long" (>5 src clock periods)
+-- pulses and the clocks are not "too" different in frequeneyc (<50%) so we
+-- shouldn't experience problems with simple 2FF synchronizers.
+sync_mgtreset : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => mgtreset_i,
+        dat_o       => mgtreset_sysclk_sync
+    );
+
+sync_rx_harderror : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => rx_harderror,
+        dat_o       => rx_harderror_sysclk_sync
+    );
+
+sync_powerdown : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => powerdown_i,
+        dat_o       => powerdown_sysclk_sync
+    );
+
+sync_rxelecidlereset : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => rxelecidlereset_i,
+        dat_o       => rxelecidlereset_sysclk_sync
+    );
+
+sync_counter_odd_word_rx : entity work.fofb_cc_syncff
+    port map (
+        clk_i       => sysclk_i,
+        dat_i       => counter_odd_word_rx_msb,
+        dat_o       => counter_odd_word_rx_msb_sysclk_sync
+    );
+
+gen_rx_reset : process(sysclk_i)
+begin
+    if (sysclk_i'event and sysclk_i = '1') then
+
+        if (mgtreset_sysclk_sync = '1' or rx_harderror_sysclk_sync = '1' or
+            powerdown_sysclk_sync = '1' or rxelecidlereset_sysclk_sync = '1' or
+            counter_odd_word_rx_msb_sysclk_sync = '1') then
+            counter4bit         <= "0000";
+            rxreset_o           <= '0';
+        else
+            -- RocketIO TX reset for 7 clock cycles
+            if (counter4bit(3) = '1') then
+                rxreset_o <= '0';
+            else
+                counter4bit <= counter4bit + 1;
+                rxreset_o <= '1';
+            end if;
+        end if;
+    end if;
+end process;
+
 ------------------------------------------------------------
 -- RX Link initialisation
 ------------------------------------------------------------
+
+counter_odd_word_rx_msb <= counter_odd_word_rx(3);
+
 rx_init : process(mgtclk_i)
 begin
 if (mgtclk_i'event and mgtclk_i = '1') then
     if (mgtreset_i = '1' or rx_harderror = '1' or powerdown_i = '1'
             or rxelecidlereset_i = '1'
-            or counter_odd_word_rx(3) = '1') then
+            or counter_odd_word_rx_msb = '1') then
         rx_link_up          <= '0';
         counter_idle_rx     <= (others => '0');
         counter_odd_word_rx <= (others => '0');
-        rx_state            <=  rx_rst;
+        rx_state            <=  rx_wait_resetdone;
         comma_align_o       <= '0';
         error_detect_ena    <= '0';
-        rxreset_o           <= '0';
-        counter4bit         <= "0000";
     else
         case (rx_state) is
-
-            -- RocketIO RX reset for 7 clock cycles
-            when rx_rst =>
-                rxreset_o <= '1';
-                if (counter4bit(3) = '1') then
-                    rx_state <= rx_wait_resetdone;
-                    rxreset_o <= '0';
-                end if;
-                counter4bit  <= counter4bit + 1;
 
             when rx_wait_resetdone =>
                 if (gtp_resetdone_i = '1') then
