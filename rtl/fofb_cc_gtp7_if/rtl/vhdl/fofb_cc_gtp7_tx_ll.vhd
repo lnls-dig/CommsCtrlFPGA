@@ -100,8 +100,6 @@ signal send_id_prev             : std_logic;
 signal mgtreset_sysclk_sync     : std_logic;
 signal tx_harderror_sysclk_sync : std_logic;
 signal powerdown_sysclk_sync    : std_logic;
-signal txreset_req_done         : std_logic;
-signal txreset_req_done_sync_mgtclk  : std_logic;
 
 begin
 
@@ -237,11 +235,9 @@ begin
             powerdown_sysclk_sync = '1') then
             counter4bit         <= "0000";
             txreset_o           <= '0';
-            txreset_req_done    <= '0';
         else
             -- RocketIO TX reset for 7 clock cycles
             if (counter4bit(3) = '1') then
-                txreset_req_done <= '1';
                 txreset_o <= '0';
             else
                 counter4bit <= counter4bit + 1;
@@ -250,13 +246,6 @@ begin
         end if;
     end if;
 end process;
-
-sync_txreset_req : entity work.fofb_cc_syncff
-    port map (
-        clk_i       => mgtclk_i,
-        dat_i       => txreset_req_done,
-        dat_o       => txreset_req_done_sync_mgtclk
-    );
 
 ------------------------------------------
 -- TX state machine
