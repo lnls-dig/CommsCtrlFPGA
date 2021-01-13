@@ -410,7 +410,52 @@ data(197)             <= rxreset(2);
 data(198)             <= txreset(2);
 data(199)             <= rxreset(3);
 data(200)             <= txreset(3);
-data(255 downto 201)  <= (others => '0');
+data(201)             <= tx_harderror(0);
+data(202)             <= tx_harderror(1);
+data(203)             <= tx_harderror(2);
+data(204)             <= tx_harderror(3);
+data(205)             <= powerdown_i(0);
+data(206)             <= powerdown_i(1);
+data(207)             <= powerdown_i(2);
+data(208)             <= powerdown_i(3);
+
+data(210 downto 209)  <= rxdisperr(0);
+data(212 downto 211)  <= rxnotintable(0);
+data(213)             <= rxrealign(0);
+data(214)             <= rxenmcommaalign(0);
+data(215)             <= rxenpcommaalign(0);
+data(216)             <= rxbuferr(0);
+data(217)             <= rxresetdone(0);
+data(218)             <= rxpolarity_i(0);
+
+data(220 downto 219)  <= rxdisperr(1);
+data(222 downto 221)  <= rxnotintable(1);
+data(223)             <= rxrealign(1);
+data(224)             <= rxenmcommaalign(1);
+data(225)             <= rxenpcommaalign(1);
+data(226)             <= rxbuferr(1);
+data(227)             <= rxresetdone(1);
+data(228)             <= rxpolarity_i(1);
+
+data(230 downto 229)  <= rxdisperr(2);
+data(232 downto 231)  <= rxnotintable(2);
+data(233)             <= rxrealign(2);
+data(234)             <= rxenmcommaalign(2);
+data(235)             <= rxenpcommaalign(2);
+data(236)             <= rxbuferr(2);
+data(237)             <= rxresetdone(2);
+data(238)             <= rxpolarity_i(2);
+
+data(240 downto 239)  <= rxdisperr(3);
+data(242 downto 241)  <= rxnotintable(3);
+data(243)             <= rxrealign(3);
+data(244)             <= rxenmcommaalign(3);
+data(245)             <= rxenpcommaalign(3);
+data(246)             <= rxbuferr(3);
+data(247)             <= rxresetdone(3);
+data(248)             <= rxpolarity_i(3);
+
+data(255 downto 249)  <= (others => '0');
 
 end generate;
 
