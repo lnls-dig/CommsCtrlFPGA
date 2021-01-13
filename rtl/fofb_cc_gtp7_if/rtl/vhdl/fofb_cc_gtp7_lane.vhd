@@ -68,6 +68,8 @@ port (
     rx_dat_o                : out std_logic_vector (15 downto 0);
     rx_dat_val_o            : out std_logic;
 
+   tx_harderror_o           : out std_logic;
+
     -- GTP_DUAL Tile interface
     txdata_o                : out std_logic_vector(15 downto 0);
     txcharisk_o             : out std_logic_vector(1 downto 0);
@@ -198,6 +200,8 @@ rx_ll : entity work.fofb_cc_gtp7_rx_ll
         rxdisperr_i         => rxdisperr_buffer,
         rxnotintable_i      => rxnotintable_buffer
     );
+
+tx_harderror_o <= tx_harderror;
 
 --
 -- Error Counters

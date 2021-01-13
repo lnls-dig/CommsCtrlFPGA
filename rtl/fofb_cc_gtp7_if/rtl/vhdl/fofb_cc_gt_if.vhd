@@ -120,6 +120,7 @@ signal rxresetdone          : std_logic_vector(3 downto 0);
 signal txresetdone          : std_logic_vector(3 downto 0);
 signal txkerr               : std_logic_2d_2(3 downto 0);
 signal txbuferr             : std_logic_vector(3 downto 0);
+signal tx_harderror         : std_logic_vector(3 downto 0);
 signal rxbuferr             : std_logic_vector(3 downto 0);
 signal rxrealign            : std_logic_vector(3 downto 0);
 signal rxdisperr            : std_logic_2d_2(3 downto 0);
@@ -225,6 +226,8 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
             rxf_full_i              => rxf_full_i(N),
             rx_dat_o                => rx_dat_buffer(N),
             rx_dat_val_o            => rx_dat_val_buffer(N),
+
+            tx_harderror_o          => tx_harderror(N),
 
             txdata_o                => txdata(N),
             txcharisk_o             => txcharisk(N),
