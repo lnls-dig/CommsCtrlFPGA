@@ -115,7 +115,18 @@ modelsim.ini
 !/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo.xci
 !/rtl/fofb_cc_tx_fifo/coregen/artix7/fofb_cc_tx_fifo_sim_netlist.vhdl
 
+/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_16_to_32
+!/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32.vhd
+!/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32.xci
+!/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32_sim_netlist.vhdl
+
+/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_32_to_32
+!/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32.vhd
+!/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32.xci
+!/rtl/fofb_cc_fa_if/coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32_sim_netlist.vhdl
+
 /rtl/chipscope/7series/ila_t8_d256_s16384
+/rtl/chipscope/7series/ila_t8_d256_s8192_cap
 /rtl/chipscope/7series/vio_din2_w64_dout2_w64
 
 ######################
