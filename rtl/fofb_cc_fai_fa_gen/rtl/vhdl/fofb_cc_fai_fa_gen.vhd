@@ -1,10 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 entity fofb_cc_fai_fa_gen is
     generic (
-        FAI_DW                : integer := 16
+        FAI_DW                : integer := 16;
+        -- Number of cycles to keep valid_o asserted
+        FAI_VALID_CYCLES      : integer := 32
     );
     port (
         -- Fast acquisition data interface
@@ -26,10 +29,13 @@ end fofb_cc_fai_fa_gen;
 
 architecture rtl of fofb_cc_fai_fa_gen is
 
+constant COUNTER_WIDTH          : integer := integer(ceil(log2(real(FAI_VALID_CYCLES))));
+
 signal counter_10kHz            : integer;
 signal puls_10kHz               : std_logic;
-signal counter5bit              : unsigned(4 downto 0);
-signal counter5bit_ena          : std_logic;
+-- 1 bit more than necessary to detect end of count.
+signal counter                  : unsigned(COUNTER_WIDTH downto 0);
+signal counter_ena              : std_logic;
 signal counter_fai_dw           : unsigned(FAI_DW-1 downto 0);
 signal fai_trigger              : std_logic;
 signal fai_trigger_rise         : std_logic;
@@ -76,15 +82,15 @@ begin
 
         -- Strech 10kHz FA clock to 16 clock cycles
         if (puls_10kHz = '1') then
-            counter5bit_ena <= '1';
-        elsif (counter5bit(4) = '1') then
-            counter5bit_ena <= '0';
+            counter_ena <= '1';
+        elsif (counter(counter'left) = '1') then
+            counter_ena <= '0';
         end if;
 
-        if (counter5bit_ena = '1') then
-            counter5bit <= counter5bit + 1;
+        if (counter_ena = '1') then
+            counter <= counter + 1;
         else
-            counter5bit <= "00000";
+            counter <= to_unsigned(0, counter'length);
         end if;
 
         if (puls_10kHz = '1') then
@@ -93,8 +99,8 @@ begin
     end if;
 end process;
 
-fai_fa_block_start_o <= counter5bit_ena;
-fai_fa_data_valid_o <= counter5bit_ena;
+fai_fa_block_start_o <= counter_ena;
+fai_fa_data_valid_o <= counter_ena;
 fai_fa_d_o <= std_logic_vector(SHIFT_LEFT(counter_fai_dw, to_integer(unsigned(data_sel_i))));
 
 end rtl;
