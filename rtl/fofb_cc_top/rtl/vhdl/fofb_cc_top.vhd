@@ -48,6 +48,7 @@ entity fofb_cc_top is
         -- BPM Data Interface Parameters
         BPMS                    : integer := 1;
         FAI_DW                  : integer := 16;
+        BLK_SIZE                : integer := 16;
         DMUX                    : integer := 2;
         USE_CHIPSCOPE           : boolean := false
 
@@ -522,6 +523,7 @@ port map(
 fofb_cc_fa_if : entity work.fofb_cc_fa_if
 generic map (
     BLK_DW                  => FAI_DW,
+    BLK_SIZE                => BLK_SIZE,
     BPMS                    => BPMS,
     DMUX                    => DMUX
 )
