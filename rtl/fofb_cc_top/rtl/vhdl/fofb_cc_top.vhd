@@ -93,6 +93,8 @@ entity fofb_cc_top is
         coeff_y_addr_i          : in  std_logic_vector(7 downto 0);
         coeff_y_dat_o           : out std_logic_vector(31 downto 0);
         -- Higher-level integration interface (PMC, SNIFFER_V5)
+        fofb_userclk_o          : out std_logic;
+        fofb_userrst_o          : out std_logic;
         xy_buf_addr_i           : in  std_logic_vector(NodeW downto 0);
         xy_buf_dat_o            : out std_logic_vector(63 downto 0);
         xy_buf_rstb_i           : in  std_logic;
@@ -214,6 +216,9 @@ fofb_timestamp_val_o  <= timestamp_val;
 fofb_link_status_o <= X"00" & "000000"& link_partners(1) & "0000000" & rx_linkup(1);
 
 fai_cfg_clk_o <= userclk;
+
+fofb_userclk_o <= userclk;
+fofb_userrst_o <= sysreset;
 
 ----------------------------------------------
 -- re-arrange rx and tx channel up outputs
