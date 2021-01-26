@@ -292,6 +292,7 @@ port map (
     refclk_i                => refclk,
     mgtreset_i              => mgtreset,
     initclk_i               => initclk,
+    sysclk_i                => sysclk_i,
 
     gtreset_i               => gtreset,
     txoutclk_o              => txoutclk,
