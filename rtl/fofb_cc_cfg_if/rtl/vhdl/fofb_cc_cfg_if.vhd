@@ -98,7 +98,7 @@ signal coef_y_wr                    : std_logic;
 
 begin
 
-fai_cfg_a_o <= '0' & std_logic_vector(cfg_addr);
+fai_cfg_a_o <= '0' & std_logic_vector(cfg_addr_prev);
 
 -- Register address input
 cfg_ack_rise <= fai_cfg_act_part_i and (not cfg_ack_prev);
