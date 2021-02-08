@@ -91,6 +91,7 @@ signal cfg_ack_prev                 : std_logic;
 signal cfg_ack_rise                 : std_logic;
 signal cfg_addr                     : unsigned(9 downto 0);
 signal cfg_addr_prev                : unsigned(9 downto 0);
+signal cfg_addr_prev2               : unsigned(9 downto 0);
 -- Following signals are related to mode of operation where feedback algorithm runs
 -- on the FPGA
 signal coef_x_wr                    : std_logic;
@@ -107,6 +108,7 @@ process(mgtclk_i)
 begin
     if (mgtclk_i'event and mgtclk_i='1') then
         cfg_addr_prev <= cfg_addr;
+        cfg_addr_prev2 <= cfg_addr_prev;
         cfg_ack_prev <= fai_cfg_act_part_i;
     end if;
 end process;
@@ -184,45 +186,45 @@ if (mgtclk_i'event and mgtclk_i='1') then
     else
         if (state = st2_read) then
 
-            if (cfg_addr_prev(9 downto 8) = "00") then
+            if (cfg_addr_prev2(9 downto 8) = "00") then
                 -- Node ID
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_bpm_id) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_bpm_id) then
                     bpmid_o <= fai_cfg_di_i(NodeW-1 downto 0);
-                end if; 
+                end if;
                 -- Time frame lenght in terms of clocks
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_time_frame_len) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_time_frame_len) then
                     timeframe_len_o <=  fai_cfg_di_i(15 downto 0);
-                end if; 
+                end if;
                 -- MGT Powerdown
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_mgt_powerdown) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_mgt_powerdown) then
                     powerdown_o <= fai_cfg_di_i(3 downto 0);
-                end if; 
+                end if;
                 -- MGT Loopback
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_mgt_loopback) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_mgt_loopback) then
                     loopback_o <= fai_cfg_di_i(7 downto 0);
                 end if;
                 -- Timeframe start delay in terms of clocks
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_time_frame_dly) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_time_frame_dly) then
                     timeframe_dly_o <=  fai_cfg_di_i(15 downto 0);
                 end if;
                 -- Golden orbit -x
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_golden_orb_x) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_golden_orb_x) then
                     golden_x_orb_o <= fai_cfg_di_i;
-                end if; 
+                end if;
                 -- Golden orbit -y
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_golden_orb_y) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_golden_orb_y) then
                     golden_y_orb_o <= fai_cfg_di_i;
                 end if;
                 -- MGT RX Polarity
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_rxpolarity) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_rxpolarity) then
                     rxpolarity_o <= fai_cfg_di_i(3 downto 0);
                 end if;
                 -- FAI data stream payload selection
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_payloadsel) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_payloadsel) then
                     fai_psel_val_o <= fai_cfg_di_i;
                 end if;
                 -- FOFB data injection select
-                if (cfg_addr_prev(7 downto 0) = cc_cmd_fofbdatasel) then
+                if (cfg_addr_prev2(7 downto 0) = cc_cmd_fofbdatasel) then
                     fofb_dat_sel_o <= fai_cfg_di_i(3 downto 0);
                 end if;
             end if;
@@ -231,7 +233,7 @@ if (mgtclk_i'event and mgtclk_i='1') then
         -- Read response matrix coefficients if required
         if (EXTENDED_CONF_BUF) then
 
-            case cfg_addr(9 downto 8) is
+            case cfg_addr_prev2(9 downto 8) is
                 when "00" =>
                     coef_x_wr <= '0';
                     coef_y_wr <= '0';
