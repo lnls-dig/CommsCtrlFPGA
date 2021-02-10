@@ -51,17 +51,22 @@ fai_armed_o <= fai_armed;
 process(adcclk_i)
 begin
     if rising_edge(adcclk_i) then
-        if (fai_armed = '1') then
-            if (counter_10kHz = 12500) then
-                counter_10kHz <= 0;
-                puls_10kHz <= '1';
-            else
-                counter_10kHz <= counter_10kHz + 1;
-                puls_10kHz <= '0';
-            end if;
-        else
+        if (adcreset_i = '1') then
             counter_10kHz <= 0;
             puls_10kHz <= '0';
+        else
+            if (fai_armed = '1') then
+                if (counter_10kHz = 12500) then
+                    counter_10kHz <= 0;
+                    puls_10kHz <= '1';
+                else
+                    counter_10kHz <= counter_10kHz + 1;
+                    puls_10kHz <= '0';
+                end if;
+            else
+                counter_10kHz <= 0;
+                puls_10kHz <= '0';
+            end if;
         end if;
     end if;
 end process;
@@ -70,31 +75,40 @@ end process;
 process(adcclk_i)
 begin
     if rising_edge(adcclk_i) then
-        -- External trigger to be used for synchronus trigger
-        fai_trigger <= fai_trigger_i;
-        fai_trigger_rise <= fai_trigger_i and not fai_trigger;
-
-        if (fai_trigger_rise = '1' or fai_trigger_internal_i = '1') then
-            fai_armed <= '1';
-        elsif (fai_enable_i = '0') then
+        if (adcreset_i = '1') then
+            fai_trigger <= '0';
+            fai_trigger_rise <= '0';
             fai_armed <= '0';
-        end if;
-
-        -- Strech 10kHz FA clock to 16 clock cycles
-        if (puls_10kHz = '1') then
-            counter_ena <= '1';
-        elsif (counter(counter'left) = '1') then
             counter_ena <= '0';
-        end if;
-
-        if (counter_ena = '1') then
-            counter <= counter + 1;
-        else
             counter <= to_unsigned(0, counter'length);
-        end if;
+            counter_fai_dw <= to_unsigned(0, counter_fai_dw'length);
+        else
+            -- External trigger to be used for synchronus trigger
+            fai_trigger <= fai_trigger_i;
+            fai_trigger_rise <= fai_trigger_i and not fai_trigger;
 
-        if (puls_10kHz = '1') then
-            counter_fai_dw <= counter_fai_dw + 1;
+            if (fai_trigger_rise = '1' or fai_trigger_internal_i = '1') then
+                fai_armed <= '1';
+            elsif (fai_enable_i = '0') then
+                fai_armed <= '0';
+            end if;
+
+            -- Strech 10kHz FA clock to 16 clock cycles
+            if (puls_10kHz = '1') then
+                counter_ena <= '1';
+            elsif (counter(counter'left) = '1') then
+                counter_ena <= '0';
+            end if;
+
+            if (counter_ena = '1') then
+                counter <= counter + 1;
+            else
+                counter <= to_unsigned(0, counter'length);
+            end if;
+
+            if (puls_10kHz = '1') then
+                counter_fai_dw <= counter_fai_dw + 1;
+            end if;
         end if;
     end if;
 end process;
