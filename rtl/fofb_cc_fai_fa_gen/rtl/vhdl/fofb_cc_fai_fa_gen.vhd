@@ -40,6 +40,7 @@ signal counter_fai_dw           : unsigned(FAI_DW-1 downto 0);
 signal fai_trigger              : std_logic;
 signal fai_trigger_rise         : std_logic;
 signal fai_armed                : std_logic;
+signal fai_done_cycle           : std_logic;
 
 begin
 
@@ -54,18 +55,22 @@ begin
         if (adcreset_i = '1') then
             counter_10kHz <= 0;
             puls_10kHz <= '0';
+            fai_done_cycle <= '0';
         else
             if (fai_armed = '1') then
                 if (counter_10kHz = 12500) then
                     counter_10kHz <= 0;
                     puls_10kHz <= '1';
+                    fai_done_cycle <= '1';
                 else
                     counter_10kHz <= counter_10kHz + 1;
                     puls_10kHz <= '0';
+                    fai_done_cycle <= '0';
                 end if;
             else
                 counter_10kHz <= 0;
                 puls_10kHz <= '0';
+                fai_done_cycle <= '0';
             end if;
         end if;
     end if;
@@ -89,7 +94,7 @@ begin
 
             if (fai_trigger_rise = '1' or fai_trigger_internal_i = '1') then
                 fai_armed <= '1';
-            elsif (fai_enable_i = '0') then
+            elsif (fai_enable_i = '0' or fai_done_cycle = '1') then
                 fai_armed <= '0';
             end if;
 
