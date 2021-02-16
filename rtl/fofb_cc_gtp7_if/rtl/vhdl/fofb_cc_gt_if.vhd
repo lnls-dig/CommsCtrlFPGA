@@ -347,7 +347,7 @@ refclk1_gen : if REFCLK_INPUT = "REFCLK1" generate
     pll0refclksel <= "010";
 end generate;
 
-refclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
+eastrefclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= refclk_i;
@@ -357,7 +357,7 @@ refclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
     pll0refclksel <= "011";
 end generate;
 
-refclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
+eastrefclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
@@ -367,7 +367,7 @@ refclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
     pll0refclksel <= "101";
 end generate;
 
-refclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
+westrefclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
@@ -377,7 +377,7 @@ refclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
     pll0refclksel <= "101";
 end generate;
 
-refclk1_gen : if REFCLK_INPUT = "WESTREFCLK1" generate
+westrefclk1_gen : if REFCLK_INPUT = "WESTREFCLK1" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
