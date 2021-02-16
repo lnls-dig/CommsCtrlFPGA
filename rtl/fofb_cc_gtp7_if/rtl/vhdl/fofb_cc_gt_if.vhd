@@ -25,7 +25,9 @@ entity fofb_cc_gt_if is
         RX_IDLE_NUM             : integer := 13;    --4095 cc
         SEND_ID_NUM             : integer := 14;    --8191 cc
         -- Simulation parameters
-        SIM_GTPRESET_SPEEDUP    : integer := 0
+        SIM_GTPRESET_SPEEDUP    : integer := 0;
+        -- Selection of transceiver reference clock input
+        REFCLK_INPUT            : string := "REFCLK0"
     );
     port (
         -- clocks and resets
@@ -325,7 +327,7 @@ quad_pll : entity work.gtpe7_common
         GTWESTREFCLK1_IN      => gtwestrefclk1
     );
 
-refclk0_gen : if GTP7_IF_REFCLK = "REFCLK0" generate
+refclk0_gen : if REFCLK_INPUT = "REFCLK0" generate
     gtrefclk0     <= refclk_i;
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
@@ -335,7 +337,7 @@ refclk0_gen : if GTP7_IF_REFCLK = "REFCLK0" generate
     pll0refclksel <= "001";
 end generate;
 
-refclk1_gen : if GTP7_IF_REFCLK = "REFCLK1" generate
+refclk1_gen : if REFCLK_INPUT = "REFCLK1" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= refclk_i;
     gteastrefclk0 <= '0';
@@ -345,7 +347,7 @@ refclk1_gen : if GTP7_IF_REFCLK = "REFCLK1" generate
     pll0refclksel <= "010";
 end generate;
 
-refclk0_gen : if GTP7_IF_REFCLK = "EASTREFCLK0" generate
+refclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= refclk_i;
@@ -355,7 +357,7 @@ refclk0_gen : if GTP7_IF_REFCLK = "EASTREFCLK0" generate
     pll0refclksel <= "011";
 end generate;
 
-refclk1_gen : if GTP7_IF_REFCLK = "EASTREFCLK1" generate
+refclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
@@ -365,7 +367,7 @@ refclk1_gen : if GTP7_IF_REFCLK = "EASTREFCLK1" generate
     pll0refclksel <= "101";
 end generate;
 
-refclk0_gen : if GTP7_IF_REFCLK = "WESTREFCLK0" generate
+refclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
@@ -375,7 +377,7 @@ refclk0_gen : if GTP7_IF_REFCLK = "WESTREFCLK0" generate
     pll0refclksel <= "101";
 end generate;
 
-refclk1_gen : if GTP7_IF_REFCLK = "WESTREFCLK1" generate
+refclk1_gen : if REFCLK_INPUT = "WESTREFCLK1" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= '0';
     gteastrefclk0 <= '0';
