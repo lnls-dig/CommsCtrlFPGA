@@ -57,6 +57,7 @@ entity fofb_cc_top is
         -- differential MGT/GTP clock inputs
         refclk_p_i              : in std_logic;
         refclk_n_i              : in std_logic;
+
         -- clock and reset interface
         adcclk_i                : in std_logic;
         adcreset_i              : in std_logic;
@@ -573,7 +574,7 @@ port map(
 
 CSCOPE_GEN : if (USE_CHIPSCOPE = true) generate
 
-ila_core_inst : entity work.ila_t8_d256_s16384
+ila_core_inst : entity work.ila_t8_d256_s8192_cap
 port map (
   clk             => userclk,
   probe0          => data,
@@ -596,7 +597,6 @@ data(18)          <= txf_wr_en(0);
 data(19)          <= int_timeframe_start;
 
 data(31 downto 20) <= (others => '0');
-
 data(63 downto 32)   <= txf_din(31 downto 0);
 data(95 downto 64)   <= txf_din(63 downto 32);
 data(127 downto 96)  <= txf_din(95 downto 64);
