@@ -308,7 +308,7 @@ end component;
         RX_CM_TRIM      : bit_vector(3 downto 0);
         RXLPM_INCM_CFG  : bit;
         RXLPM_IPCM_CFG  : bit;
-        TXDIFFCTRL      : bit_vector(3 downto 0);
+        TXDIFFCTRL      : std_logic_vector(3 downto 0);
     end record;
 
     function select_physif(s: string) return t_physif is
