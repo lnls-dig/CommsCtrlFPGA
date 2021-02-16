@@ -88,7 +88,11 @@ port
     PLL1OUTCLK_OUT       : out std_logic;
     PLL1OUTREFCLK_OUT    : out std_logic;
     GTREFCLK1_IN         : in std_logic;
-    GTREFCLK0_IN         : in std_logic
+    GTREFCLK0_IN         : in std_logic;
+    GTEASTREFCLK0_IN     : in std_logic := '0';
+    GTEASTREFCLK1_IN     : in std_logic := '0';
+    GTWESTREFCLK0_IN     : in std_logic := '0';
+    GTWESTREFCLK1_IN     : in std_logic := '0'
 );
 
 end gtpe7_common;
@@ -173,13 +177,13 @@ begin
         DRPRDY                          =>      open,
         DRPWE                           =>      tied_to_ground_i,
         ----------------- Common Block - GTPE2_COMMON Clocking Ports ---------------
-        GTEASTREFCLK0                   =>      tied_to_ground_i,
-        GTEASTREFCLK1                   =>      tied_to_ground_i,
+        GTEASTREFCLK0                   =>      GTEASTREFCLK0_IN,
+        GTEASTREFCLK1                   =>      GTEASTREFCLK1_IN,
         GTGREFCLK1                      =>      tied_to_ground_i,
         GTREFCLK0                       =>      GTREFCLK0_IN,
         GTREFCLK1                       =>      GTREFCLK1_IN,
-        GTWESTREFCLK0                   =>      tied_to_ground_i,
-        GTWESTREFCLK1                   =>      tied_to_ground_i,
+        GTWESTREFCLK0                   =>      GTWESTREFCLK0_IN,
+        GTWESTREFCLK1                   =>      GTWESTREFCLK1_IN,
         PLL0OUTCLK                      =>      PLL0OUTCLK_OUT,
         PLL0OUTREFCLK                   =>      PLL0OUTREFCLK_OUT,
         PLL1OUTCLK                      =>      PLL1OUTCLK_OUT,
