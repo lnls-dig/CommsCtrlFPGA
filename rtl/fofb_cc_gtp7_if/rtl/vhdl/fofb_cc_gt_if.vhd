@@ -357,13 +357,11 @@ ila_core_inst : entity work.ila_t8_d256_s8192_cap
      );
 
 trig0(0)           <= timeframe_start_i;
-trig0(1)           <= rxreset(0);
-trig0(2)           <= txreset(0);
-trig0(3)           <= rxbuferr(0);
-trig0(4)           <= gtreset_i;
-trig0(5)           <= mgtreset_i;
-trig0(6)           <= pllrst;
-trig0(7)           <= '0';
+trig0(1)           <= timeframe_valid_i;
+trig0(3 downto 2)  <= rxcharisk(1);
+trig0(5 downto 4)  <= rxcharisk(2);
+trig0(6)           <= gtreset_i;
+trig0(7)           <= mgtreset_i;
 
 data(15 downto 0)  <= rxdata(0);
 data(31 downto 16) <= rxdata(1);
@@ -402,22 +400,7 @@ data(189 downto 186) <= rxbuferr;
 data(190)             <= gtreset_i;
 data(191)             <= mgtreset_i;
 data(192)             <= pllrst;
-data(193)             <= rxreset(0);
-data(194)             <= txreset(0);
-data(195)             <= rxreset(1);
-data(196)             <= txreset(1);
-data(197)             <= rxreset(2);
-data(198)             <= txreset(2);
-data(199)             <= rxreset(3);
-data(200)             <= txreset(3);
-data(201)             <= tx_harderror(0);
-data(202)             <= tx_harderror(1);
-data(203)             <= tx_harderror(2);
-data(204)             <= tx_harderror(3);
-data(205)             <= powerdown_i(0);
-data(206)             <= powerdown_i(1);
-data(207)             <= powerdown_i(2);
-data(208)             <= powerdown_i(3);
+data(208 downto 193)  <= timeframe_cntr_i;
 
 data(210 downto 209)  <= rxdisperr(0);
 data(212 downto 211)  <= rxnotintable(0);
