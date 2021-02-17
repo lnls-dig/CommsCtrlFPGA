@@ -189,11 +189,6 @@ constant GTP7_IF_CSGEN      : boolean := FALSE;
 constant GTX_IF_CSGEN       : boolean := FALSE;
 constant GTPA_IF_CSGEN      : boolean := FALSE;
 
---
--- Selection of transceiver reference clock input
---
-constant GTP7_IF_REFCLK     : string := "REFCLK0";
-
 end fofb_cc_pkg;
 
 -----------------------------------------------------------------------------------

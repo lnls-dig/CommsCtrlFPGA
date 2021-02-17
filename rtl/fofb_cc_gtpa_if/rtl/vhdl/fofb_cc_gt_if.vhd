@@ -36,7 +36,9 @@ generic (
     -- Simulation parameters
     SIM_GTPRESET_SPEEDUP    : integer := 0;
     -- Custom FPGA Device parameters
-    REF_GTPA                : integer := 1
+    REF_GTPA                : integer := 1;
+    -- Selection of transceiver reference clock input
+    REFCLK_INPUT            : string := "REFCLK0"
 );
 port (
     -- Main clocks and resets

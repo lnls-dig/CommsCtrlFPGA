@@ -26,7 +26,9 @@ entity fofb_cc_gt_if is
         SEND_ID_NUM             : integer := 14;    --8191 cc
         -- Simulation parameters
         SIM_GTPRESET_SPEEDUP    : integer := 0;
-        PHYSICAL_INTERFACE      : string  := "SFP"
+        PHYSICAL_INTERFACE      : string  := "SFP";
+        -- Selection of transceiver reference clock input
+        REFCLK_INPUT            : string := "REFCLK0"
     );
     port (
         -- clocks and resets
@@ -99,6 +101,10 @@ signal txoutclk             : std_logic_vector(3 downto 0);
 
 signal gtrefclk0            : std_logic;
 signal gtrefclk1            : std_logic;
+signal gteastrefclk0        : std_logic;
+signal gteastrefclk1        : std_logic;
+signal gtwestrefclk0        : std_logic;
+signal gtwestrefclk1        : std_logic;
 signal pll0refclksel        : std_logic_vector(2 downto 0);
 signal pllrst               : std_logic;
 
@@ -316,19 +322,71 @@ quad_pll : entity work.gtpe7_common
         PLL1OUTCLK_OUT        => pll1clk,
         PLL1OUTREFCLK_OUT     => pll1refclk,
         GTREFCLK1_IN          => gtrefclk1,
-        GTREFCLK0_IN          => gtrefclk0
+        GTREFCLK0_IN          => gtrefclk0,
+        GTEASTREFCLK0_IN      => gteastrefclk0,
+        GTEASTREFCLK1_IN      => gteastrefclk1,
+        GTWESTREFCLK0_IN      => gtwestrefclk0,
+        GTWESTREFCLK1_IN      => gtwestrefclk1
     );
 
-refclk0_gen : if GTP7_IF_REFCLK = "REFCLK0" generate
+refclk0_gen : if REFCLK_INPUT = "REFCLK0" generate
     gtrefclk0     <= refclk_i;
     gtrefclk1     <= '0';
+    gteastrefclk0 <= '0';
+    gteastrefclk1 <= '0';
+    gtwestrefclk0 <= '0';
+    gtwestrefclk1 <= '0';
     pll0refclksel <= "001";
 end generate;
 
-refclk1_gen : if GTP7_IF_REFCLK = "REFCLK1" generate
+refclk1_gen : if REFCLK_INPUT = "REFCLK1" generate
     gtrefclk0     <= '0';
     gtrefclk1     <= refclk_i;
+    gteastrefclk0 <= '0';
+    gteastrefclk1 <= '0';
+    gtwestrefclk0 <= '0';
+    gtwestrefclk1 <= '0';
     pll0refclksel <= "010";
+end generate;
+
+eastrefclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
+    gtrefclk0     <= '0';
+    gtrefclk1     <= '0';
+    gteastrefclk0 <= refclk_i;
+    gteastrefclk1 <= '0';
+    gtwestrefclk0 <= '0';
+    gtwestrefclk1 <= '0';
+    pll0refclksel <= "011";
+end generate;
+
+eastrefclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
+    gtrefclk0     <= '0';
+    gtrefclk1     <= '0';
+    gteastrefclk0 <= '0';
+    gteastrefclk1 <= refclk_i;
+    gtwestrefclk0 <= '0';
+    gtwestrefclk1 <= '0';
+    pll0refclksel <= "100";
+end generate;
+
+westrefclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
+    gtrefclk0     <= '0';
+    gtrefclk1     <= '0';
+    gteastrefclk0 <= '0';
+    gteastrefclk1 <= '0';
+    gtwestrefclk0 <= refclk_i;
+    gtwestrefclk1 <= '0';
+    pll0refclksel <= "101";
+end generate;
+
+westrefclk1_gen : if REFCLK_INPUT = "WESTREFCLK1" generate
+    gtrefclk0     <= '0';
+    gtrefclk1     <= '0';
+    gteastrefclk0 <= '0';
+    gteastrefclk1 <= '0';
+    gtwestrefclk0 <= '0';
+    gtwestrefclk1 <= refclk_i;
+    pll0refclksel <= "110";
 end generate;
 
 --

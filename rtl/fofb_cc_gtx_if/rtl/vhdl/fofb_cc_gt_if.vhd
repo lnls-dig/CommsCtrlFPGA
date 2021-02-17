@@ -30,7 +30,9 @@ entity fofb_cc_gt_if is
         RX_IDLE_NUM             : integer := 13;    --4095 cc
         SEND_ID_NUM             : integer := 14;    --8191 cc
         -- Simulation parameters
-        SIM_GTPRESET_SPEEDUP    : integer := 0
+        SIM_GTPRESET_SPEEDUP    : integer := 0;
+        -- Selection of transceiver reference clock input
+        REFCLK_INPUT            : string := "REFCLK0"
     );
     port (
         -- clocks and resets

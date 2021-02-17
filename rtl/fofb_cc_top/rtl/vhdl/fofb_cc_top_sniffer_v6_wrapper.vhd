@@ -11,7 +11,8 @@ entity fofb_cc_top_wrapper is
     generic (
         ID                      : integer := 250;
         SIM_GTPRESET_SPEEDUP    : integer := 0;
-        LANE_COUNT              : integer := 2
+        LANE_COUNT              : integer := 2;
+        REFCLK_INPUT            : string  := "REFCLK0"
     );
     port (
         -- differential MGT/GTP clock inputs
@@ -65,7 +66,8 @@ fofb_cc_top : entity work.fofb_cc_top
         ID                      => ID,
         DEVICE                  => SNIFFER,
         SIM_GTPRESET_SPEEDUP    => SIM_GTPRESET_SPEEDUP,
-        LANE_COUNT              => LANE_COUNT
+        LANE_COUNT              => LANE_COUNT,
+        REFCLK_INPUT            => REFCLK_INPUT
     )
     port map (
         refclk_p_i              => refclk_p_i,
