@@ -31,6 +31,7 @@ entity fofb_cc_gt_if is
         SEND_ID_NUM             : integer := 14;    --8191 cc
         -- Simulation parameters
         SIM_GTPRESET_SPEEDUP    : integer := 0;
+        PHYSICAL_INTERFACE      : string  := "SFP";
         -- Selection of transceiver reference clock input
         REFCLK_INPUT            : string := "REFCLK0"
     );

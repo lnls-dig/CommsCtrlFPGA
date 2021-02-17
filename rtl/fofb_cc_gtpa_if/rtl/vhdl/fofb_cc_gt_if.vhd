@@ -36,6 +36,7 @@ generic (
     -- Simulation parameters
     SIM_GTPRESET_SPEEDUP    : integer := 0;
     -- Custom FPGA Device parameters
+    PHYSICAL_INTERFACE      : string  := "SFP";
     REF_GTPA                : integer := 1;
     -- Selection of transceiver reference clock input
     REFCLK_INPUT            : string := "REFCLK0"
