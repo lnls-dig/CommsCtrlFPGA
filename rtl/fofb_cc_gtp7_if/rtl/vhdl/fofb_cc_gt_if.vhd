@@ -364,7 +364,7 @@ eastrefclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
     gteastrefclk1 <= refclk_i;
     gtwestrefclk0 <= '0';
     gtwestrefclk1 <= '0';
-    pll0refclksel <= "101";
+    pll0refclksel <= "100";
 end generate;
 
 westrefclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
