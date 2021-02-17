@@ -35,6 +35,7 @@ entity fofb_cc_top is
         DEVICE                  : device_t := BPM;
         USE_DCM                 : boolean := true;
         SIM_GTPRESET_SPEEDUP    : integer := 0;
+        REFCLK_INPUT            : string  := "REFCLK0";
         INTERLEAVED             : boolean := false;
         -- Extended FAI interface for FOFB
         EXTENDED_CONF_BUF       : boolean := false;
@@ -287,7 +288,8 @@ generic map (
     TX_IDLE_NUM             => TX_IDLE_NUM,
     RX_IDLE_NUM             => RX_IDLE_NUM,
     SEND_ID_NUM             => SEND_ID_NUM,
-    SIM_GTPRESET_SPEEDUP    => SIM_GTPRESET_SPEEDUP
+    SIM_GTPRESET_SPEEDUP    => SIM_GTPRESET_SPEEDUP,
+    REFCLK_INPUT            => REFCLK_INPUT
 )
 port map (
     refclk_i                => refclk,
