@@ -25,7 +25,8 @@ entity fofb_cc_gt_if is
         RX_IDLE_NUM             : integer := 13;    --4095 cc
         SEND_ID_NUM             : integer := 14;    --8191 cc
         -- Simulation parameters
-        SIM_GTPRESET_SPEEDUP    : integer := 0
+        SIM_GTPRESET_SPEEDUP    : integer := 0;
+        PHYSICAL_INTERFACE      : string  := "SFP"
     );
     port (
         -- clocks and resets
@@ -248,7 +249,8 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
     gtp7_tile_wrapper : entity work.fofb_cc_gtp7_tile_wrapper
         generic map (
             -- simulation attributes
-            GT_SIM_GTRESET_SPEEDUP      => SIM_GTPRESET_SPEEDUP
+            GT_SIM_GTRESET_SPEEDUP      => SIM_GTPRESET_SPEEDUP,
+            PHYSICAL_INTERFACE          => PHYSICAL_INTERFACE
         )
         port map (
             pll0clk_in                  => pll0clk,

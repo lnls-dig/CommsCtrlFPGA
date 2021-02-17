@@ -21,7 +21,8 @@ use unisim.vcomponents.all;
 entity FOFB_CC_GTP7_TILE_WRAPPER is
 generic (
     -- Simulation attributes
-    GT_SIM_GTRESET_SPEEDUP                  : integer  := 0  -- Set to 1 to speed up sim reset
+    GT_SIM_GTRESET_SPEEDUP                  : integer  := 0;        -- Set to 1 to speed up sim reset
+    PHYSICAL_INTERFACE                      : string   := "SFP"
 );
 port (
     rst_in                                  : in   std_logic;
@@ -106,7 +107,8 @@ begin
   gtp7_tile : entity work.fofb_cc_gtp7_tile
   generic map (
     -- simulation attributes
-    GT_SIM_GTRESET_SPEEDUP      => int2boolstr(GT_SIM_GTRESET_SPEEDUP)
+    GT_SIM_GTRESET_SPEEDUP      => int2boolstr(GT_SIM_GTRESET_SPEEDUP),
+    PHYSICAL_INTERFACE          => PHYSICAL_INTERFACE
   )
   port map (
     rst_in                      =>  rst_in,

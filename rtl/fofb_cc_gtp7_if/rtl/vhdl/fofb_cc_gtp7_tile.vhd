@@ -76,7 +76,8 @@ generic
     GT_SIM_GTRESET_SPEEDUP    : string := "FALSE"; -- Set to "TRUE" to speed up sim reset
     EXAMPLE_SIMULATION        : integer  := 0;     -- Set to 1 for simulation
     TXSYNC_OVRD_IN            : bit    := '0';
-    TXSYNC_MULTILANE_IN       : bit    := '0' 
+    TXSYNC_MULTILANE_IN       : bit    := '0';
+    PHYSICAL_INTERFACE        : string := "SFP"    -- Options: SFP, BACKPLANE
 );
 port 
 (
@@ -300,6 +301,39 @@ end component;
     signal txrundisp_float_i                :   std_logic_vector(1 downto 0);
     signal rxdatavalid_float_i              :   std_logic;
        
+--********************* Type and Function Declaration *************************
+       
+    type t_physif is record
+        RX_CM_SEL       : bit_vector(1 downto 0);
+        RX_CM_TRIM      : bit_vector(3 downto 0);
+        RXLPM_INCM_CFG  : bit;
+        RXLPM_IPCM_CFG  : bit;
+        TXDIFFCTRL      : std_logic_vector(3 downto 0);
+    end record;
+
+    function select_physif(s: string) return t_physif is
+        variable cfg           : t_physif;
+    begin
+        if s = "BACKPLANE" then
+            cfg.RX_CM_SEL      := "00";
+            cfg.RX_CM_TRIM     := "0000";
+            cfg.RXLPM_INCM_CFG := '1';
+            cfg.RXLPM_IPCM_CFG := '0';
+            cfg.TXDIFFCTRL     := "1000";
+        else
+            cfg.RX_CM_SEL      := "01";
+            cfg.RX_CM_TRIM     := "0000";
+            cfg.RXLPM_INCM_CFG := '0';
+            cfg.RXLPM_IPCM_CFG := '1';
+            cfg.TXDIFFCTRL     := "1000";
+        end if;
+
+        return cfg;
+
+    end select_physif;
+
+    constant physif_cfg : t_physif := select_physif(PHYSICAL_INTERFACE);
+
 --******************************** Main Body of Code***************************
                        
 begin                      
@@ -415,8 +449,8 @@ begin
         PMA_RSV4                                =>     ("0000"),
         RX_BIAS_CFG                             =>     ("0000111100110011"),
         DMONITOR_CFG                            =>     (x"000A00"),
-        RX_CM_SEL                               =>     ("01"),
-        RX_CM_TRIM                              =>     ("0000"),
+        RX_CM_SEL                               =>     (physif_cfg.RX_CM_SEL),
+        RX_CM_TRIM                              =>     (physif_cfg.RX_CM_TRIM),
         RX_DEBUG_CFG                            =>     ("00000000000000"),
         RX_OS_CFG                               =>     ("0000010000000"),
         TERM_RCAL_CFG                           =>     ("100001000010000"),
@@ -614,8 +648,8 @@ begin
         RXLPM_HF_CFG2                           =>     ("01010"),
         RXLPM_HF_CFG3                           =>     ("0000"),
         RXLPM_HOLD_DURING_EIDLE                 =>     ('0'),
-        RXLPM_INCM_CFG                          =>     ('0'),
-        RXLPM_IPCM_CFG                          =>     ('1'),
+        RXLPM_INCM_CFG                          =>     (physif_cfg.RXLPM_INCM_CFG),
+        RXLPM_IPCM_CFG                          =>     (physif_cfg.RXLPM_IPCM_CFG),
         RXLPM_LF_CFG                            =>     ("000000001111110000"),
         RXLPM_LF_CFG2                           =>     ("01010"),
         RXLPM_OSINT_CFG                         =>     ("100"),
@@ -919,7 +953,7 @@ begin
         GTPTXP                          =>      gtptxp_out,
         TXBUFDIFFCTRL                   =>      "100",
         TXDEEMPH                        =>      tied_to_ground_i,
-        TXDIFFCTRL                      =>      "1000",
+        TXDIFFCTRL                      =>      physif_cfg.TXDIFFCTRL,
         TXDIFFPD                        =>      tied_to_ground_i,
         TXINHIBIT                       =>      tied_to_ground_i,
         TXMAINCURSOR                    =>      "0000000",
