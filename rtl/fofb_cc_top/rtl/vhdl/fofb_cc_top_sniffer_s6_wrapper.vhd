@@ -12,6 +12,7 @@ entity fofb_cc_top_wrapper is
         ID                      : integer := 250;
         SIM_GTPRESET_SPEEDUP    : integer := 0;
         LANE_COUNT              : integer := 2;
+        PHYSICAL_INTERFACE      : string  := "SFP";
         REFCLK_INPUT            : string  := "REFCLK0"
     );
     port (
@@ -66,6 +67,7 @@ fofb_cc_top : entity work.fofb_cc_top
         DEVICE                  => SNIFFER,
         SIM_GTPRESET_SPEEDUP    => SIM_GTPRESET_SPEEDUP,
         LANE_COUNT              => LANE_COUNT,
+        PHYSICAL_INTERFACE      => PHYSICAL_INTERFACE,
         REFCLK_INPUT            => REFCLK_INPUT
     )
     port map (
