@@ -320,12 +320,16 @@ end component;
             cfg.RXLPM_INCM_CFG := '1';
             cfg.RXLPM_IPCM_CFG := '0';
             cfg.TXDIFFCTRL     := "1000";
-        else
+        elsif s = "SFP" then
             cfg.RX_CM_SEL      := "01";
             cfg.RX_CM_TRIM     := "0000";
             cfg.RXLPM_INCM_CFG := '0';
             cfg.RXLPM_IPCM_CFG := '1';
             cfg.TXDIFFCTRL     := "1000";
+        else
+            assert false
+              report "fofb_cc_gtp7_tile: invalid PHYSICAL_INTERFACE value: " & s
+              severity failure;
         end if;
 
         return cfg;
