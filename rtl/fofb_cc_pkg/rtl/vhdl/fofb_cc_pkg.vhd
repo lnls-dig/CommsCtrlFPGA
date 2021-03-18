@@ -29,6 +29,12 @@ function zeros(N: integer) return std_logic_vector;
 -- Function to transpose CRC & Data
 function transpose_data(inp : std_logic_vector) return std_logic_vector;
 function tostd(inp : boolean) return std_logic;
+-- Function for log2
+function log2_ceil(N : natural) return positive;
+function log2_size(N : natural) return positive;
+-- Functions for Gray encoder/decoder
+function gray_encode(x : std_logic_vector) return std_logic_vector;
+function gray_decode(x : std_logic_vector; step : natural) return std_logic_vector;
 -- Type definitions
 -- 2D arrays
 type std_logic_2d       is array (natural range <>) of std_logic_vector(31 downto 0);
@@ -40,6 +46,7 @@ type std_logic_2d_10    is array (natural range <>) of std_logic_vector(9 downto
 type std_logic_2d_16    is array (natural range <>) of std_logic_vector(15 downto 0);
 type std_logic_2d_19    is array (natural range <>) of std_logic_vector(0 to 19);
 type std_logic_2d_32    is array (natural range <>) of std_logic_vector(31 downto 0);
+type std_logic_2d_64    is array (natural range <>) of std_logic_vector(63 downto 0);
 type std_logic_2d_128   is array (natural range <>) of std_logic_vector(127 downto 0);
 type sys_state_type is (disabled, idle, enabled);
 
@@ -240,5 +247,49 @@ begin
         return('0');
     end if;
 end tostd;
+
+----------------------------------------------------------------------
+-- Function for log2
+----------------------------------------------------------------------
+
+function log2_ceil(N : natural) return positive is
+begin
+  if N <= 2 then
+    return 1;
+  elsif N mod 2 = 0 then
+    return 1 + log2_ceil(N/2);
+  else
+    return 1 + log2_ceil((N+1)/2);
+  end if;
+end;
+
+function log2_size(N: natural) return positive is
+begin
+  return log2_ceil(N);
+end;
+
+------------------------------------------------------------------------------
+-- Functions for Gray encoder/decoder
+------------------------------------------------------------------------------
+function gray_encode(x : std_logic_vector) return std_logic_vector is
+  variable o : std_logic_vector(x'length downto 0);
+begin
+  o := (x & '0') xor ('0' & x);
+  return o(x'length downto 1);
+end gray_encode;
+
+--  call with step=1
+function gray_decode(x : std_logic_vector; step : natural) return std_logic_vector is
+  constant len : natural                          := x'length;
+  alias y      : std_logic_vector(len-1 downto 0) is x;
+  variable z   : std_logic_vector(len-1 downto 0) := (others => '0');
+begin
+  if step >= len then
+    return y;
+  else
+    z(len-step-1 downto 0) := y(len-1 downto step);
+    return gray_decode(y xor z, step+step);
+  end if;
+end gray_decode;
 
 end fofb_cc_pkg;
