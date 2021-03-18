@@ -5,6 +5,7 @@ def __dirs():
               "fofb_cc_clk_if",
               "fofb_cc_dpbram",
               "fofb_cc_fa_if",
+              "fofb_cc_fa_if_pl",
               "fofb_cc_async_fifo",
               "fofb_cc_fod",
               "fofb_cc_frame_cntrl",
