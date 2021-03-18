@@ -38,6 +38,8 @@ entity fofb_cc_top is
         PHYSICAL_INTERFACE      : string  := "SFP";
         REFCLK_INPUT            : string  := "REFCLK0";
         INTERLEAVED             : boolean := false;
+        -- Use simpler/parallel FA IF or not
+        USE_PARALLEL_FA_IF      : boolean := false;
         -- Extended FAI interface for FOFB
         EXTENDED_CONF_BUF       : boolean := false;
         -- Absolute or Difference position data
@@ -65,10 +67,14 @@ entity fofb_cc_top is
         adcreset_i              : in std_logic;
         sysclk_i                : in std_logic;
         sysreset_n_i            : in std_logic;
-        -- fast acquisition data interface
-        fai_fa_block_start_i    : in std_logic;
-        fai_fa_data_valid_i     : in std_logic;
-        fai_fa_d_i              : in std_logic_vector(FAI_DW-1 downto 0);
+        -- fast acquisition data interface. Used when USE_PARALLEL_FA_IF = false
+        fai_fa_block_start_i    : in std_logic := '0';
+        fai_fa_data_valid_i     : in std_logic := '0';
+        fai_fa_d_i              : in std_logic_vector(FAI_DW-1 downto 0) := (others => '0');
+        -- fast acquisition parallel data interface. Used when USE_PARALLEL_FA_IF = true
+        fai_fa_pl_data_valid_i  : in std_logic := '0';
+        fai_fa_pl_d_x_i         : in std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
+        fai_fa_pl_d_y_i         : in std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
         -- FOFB communication controller configuration interface
         fai_cfg_a_o             : out std_logic_vector(10 downto 0);
         fai_cfg_d_o             : out std_logic_vector(31 downto 0);
@@ -531,6 +537,9 @@ port map(
 ----------------------------------------------
 -- fa interface module, removed by synthesizer for PMC
 ----------------------------------------------
+
+WITHOUT_USE_PARALLEL_FA_IF : if (USE_PARALLEL_FA_IF = false) generate
+
 fofb_cc_fa_if : entity work.fofb_cc_fa_if
 generic map (
     BLK_DW                  => FAI_DW,
@@ -551,6 +560,33 @@ port map(
     bpm_cc_xpos_o           => bpm_cc_xpos,
     bpm_cc_ypos_o           => bpm_cc_ypos
 );
+
+end generate;
+
+----------------------------------------------
+-- fa interface parallel (pl) module, simpler/parallel interface
+----------------------------------------------
+
+WITH_USE_PARALLEL_FA_IF : if (USE_PARALLEL_FA_IF = true) generate
+
+fofb_cc_fa_if_pl: entity work.fofb_cc_fa_if_pl
+generic map (
+    BPMS                    => BPMS
+)
+port map(
+    mgtclk_i                => userclk,
+    adcclk_i                => adcclk_i,
+    adcreset_i              => adcreset,
+    mgtreset_i              => sysreset,
+    fa_data_valid_i         => fai_fa_pl_data_valid_i,
+    fa_dat_x_i              => fai_fa_pl_d_x_i,
+    fa_dat_y_i              => fai_fa_pl_d_y_i,
+    timeframe_start_o       => int_timeframe_start,
+    bpm_cc_xpos_o           => bpm_cc_xpos,
+    bpm_cc_ypos_o           => bpm_cc_ypos
+);
+
+end generate;
 
 ----------------------------------------------
 -- Control module for tfs inputs from libera and mgts
