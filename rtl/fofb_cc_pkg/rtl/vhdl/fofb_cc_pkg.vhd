@@ -1,18 +1,18 @@
 ----------------------------------------------------------------------------
---  Project      : Diamond FOFB Communication Controller              
---  Filename     : fofb_cc_pkg.vhd                                    
---  Purpose      : CC parameters                         
---  Author       : Isa S. Uzun                                       
+--  Project      : Diamond FOFB Communication Controller
+--  Filename     : fofb_cc_pkg.vhd
+--  Purpose      : CC parameters
+--  Author       : Isa S. Uzun
 ----------------------------------------------------------------------------
---  Copyright (c) 2007-2009 Diamond Light Source Ltd.                      
---  All rights reserved.                                              
+--  Copyright (c) 2007-2009 Diamond Light Source Ltd.
+--  All rights reserved.
 ----------------------------------------------------------------------------
---  Description: CC parameters                              
+--  Description: CC parameters
 ----------------------------------------------------------------------------
---  Limitations & Assumptions:                                        
+--  Limitations & Assumptions:
 ----------------------------------------------------------------------------
 --  Known Errors: This design is still under test. Please send any bug
---  reports to isa.uzun@diamond.ac.uk                       
+--  reports to isa.uzun@diamond.ac.uk
 ----------------------------------------------------------------------------
 library ieee;
 use ieee.std_logic_1164.all;
