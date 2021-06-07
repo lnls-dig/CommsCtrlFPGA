@@ -13,12 +13,20 @@ entity fofb_cc_top_wrapper is
         SIM_GTPRESET_SPEEDUP    : integer := 0;
         LANE_COUNT              : integer := 2;
         PHYSICAL_INTERFACE      : string  := "SFP";
-        REFCLK_INPUT            : string  := "REFCLK0"
+        REFCLK_INPUT            : string  := "REFCLK0";
+        CLK_BUFFERS             : boolean := true
     );
     port (
         -- differential MGT/GTP clock inputs
-        refclk_p_i              : in  std_logic;
-        refclk_n_i              : in  std_logic;
+        refclk_p_i              : in std_logic := '0';
+        refclk_n_i              : in std_logic := '1';
+        -- Only used when CLK_BUFFERS := false
+        ext_initclk_i           : in std_logic := '0';
+        ext_refclk_i            : in std_logic := '0';
+        ext_mgtreset_i          : in std_logic := '0';
+        ext_gtreset_i           : in std_logic := '0';
+        ext_userclk_i           : in std_logic := '0';
+        ext_userclk_2x_i        : in std_logic := '0';
         -- clock and reset interface
         sysclk_i                : in  std_logic;
         sysreset_n_i            : in  std_logic;
@@ -39,6 +47,13 @@ entity fofb_cc_top_wrapper is
         xy_buf_dat_o            : out std_logic_vector(63 downto 0);
         timeframe_end_o         : out std_logic;
         -- Higher-level integration interface (used for PMC)
+        fofb_userclk_o          : out std_logic;
+        fofb_userclk_2x_o       : out std_logic;
+        fofb_userrst_o          : out std_logic;
+        fofb_initclk_o          : out std_logic;
+        fofb_refclk_o           : out std_logic;
+        fofb_mgtreset_o         : out std_logic;
+        fofb_gtreset_o          : out std_logic;
         fofb_dma_ok_i           : in  std_logic;
         fofb_rxlink_up_o        : out std_logic;
         fofb_rxlink_partner_o   : out std_logic_vector(9 downto 0);
@@ -74,11 +89,21 @@ fofb_cc_top : entity work.fofb_cc_top
         SIM_GTPRESET_SPEEDUP    => SIM_GTPRESET_SPEEDUP,
         LANE_COUNT              => LANE_COUNT,
         PHYSICAL_INTERFACE      => PHYSICAL_INTERFACE,
-        REFCLK_INPUT            => REFCLK_INPUT
+        REFCLK_INPUT            => REFCLK_INPUT,
+        CLK_BUFFERS             => CLK_BUFFERS
     )
     port map (
         refclk_p_i              => refclk_p_i,
         refclk_n_i              => refclk_n_i,
+
+        -- Only used when CLK_BUFFERS := false
+        ext_initclk_i           => ext_initclk_i,
+        ext_refclk_i            => ext_refclk_i,
+        ext_mgtreset_i          => ext_mgtreset_i,
+        ext_gtreset_i           => ext_gtreset_i,
+        ext_userclk_i           => ext_userclk_i,
+        ext_userclk_2x_i        => ext_userclk_2x_i,
+
         adcclk_i                => '0',
         adcreset_i              => '0',
         sysclk_i                => sysclk_i,
@@ -108,6 +133,13 @@ fofb_cc_top : entity work.fofb_cc_top
         xy_buf_dat_o            => xy_buf_dat_o,
         timeframe_start_o       => open,
         timeframe_end_o         => timeframe_end_o,
+        fofb_userclk_o          => fofb_userclk_o,
+        fofb_userclk_2x_o       => fofb_userclk_2x_o,
+        fofb_userrst_o          => fofb_userrst_o,
+        fofb_initclk_o          => fofb_initclk_o,
+        fofb_refclk_o           => fofb_refclk_o,
+        fofb_mgtreset_o         => fofb_mgtreset_o,
+        fofb_gtreset_o          => fofb_gtreset_o,
         fofb_watchdog_i         => (others => '0'),
         fofb_event_i            => (others => '0'),
         fofb_process_time_o     => open,

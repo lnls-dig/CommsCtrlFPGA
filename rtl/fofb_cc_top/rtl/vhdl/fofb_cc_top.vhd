@@ -37,6 +37,7 @@ entity fofb_cc_top is
         SIM_GTPRESET_SPEEDUP    : integer := 0;
         PHYSICAL_INTERFACE      : string  := "SFP";
         REFCLK_INPUT            : string  := "REFCLK0";
+        CLK_BUFFERS             : boolean := true;
         INTERLEAVED             : boolean := false;
         -- Use simpler/parallel FA IF or not
         USE_PARALLEL_FA_IF      : boolean := false;
@@ -59,8 +60,16 @@ entity fofb_cc_top is
     );
     port (
         -- differential MGT/GTP clock inputs
-        refclk_p_i              : in std_logic;
-        refclk_n_i              : in std_logic;
+        refclk_p_i              : in std_logic := '0';
+        refclk_n_i              : in std_logic := '1';
+
+        -- Only used when CLK_BUFFERS := false
+        ext_initclk_i           : in std_logic := '0';
+        ext_refclk_i            : in std_logic := '0';
+        ext_mgtreset_i          : in std_logic := '0';
+        ext_gtreset_i           : in std_logic := '0';
+        ext_userclk_i           : in std_logic := '0';
+        ext_userclk_2x_i        : in std_logic := '0';
 
         -- clock and reset interface
         adcclk_i                : in std_logic;
@@ -103,7 +112,12 @@ entity fofb_cc_top is
         coeff_y_dat_o           : out std_logic_vector(31 downto 0);
         -- Higher-level integration interface (PMC, SNIFFER_V5)
         fofb_userclk_o          : out std_logic;
+        fofb_userclk_2x_o       : out std_logic;
         fofb_userrst_o          : out std_logic;
+        fofb_initclk_o          : out std_logic;
+        fofb_refclk_o           : out std_logic;
+        fofb_mgtreset_o         : out std_logic;
+        fofb_gtreset_o          : out std_logic;
         xy_buf_addr_i           : in  std_logic_vector(NodeW downto 0);
         xy_buf_dat_o            : out std_logic_vector(63 downto 0);
         xy_buf_rstb_i           : in  std_logic;
@@ -226,8 +240,14 @@ fofb_link_status_o <= X"00" & "000000"& link_partners(1) & "0000000" & rx_linkup
 
 fai_cfg_clk_o <= userclk;
 
-fofb_userclk_o <= userclk;
-fofb_userrst_o <= sysreset;
+fofb_userclk_o    <= userclk;
+fofb_userclk_2x_o <= userclk_2x;
+fofb_userrst_o    <= sysreset;
+
+fofb_initclk_o  <= userclk;
+fofb_refclk_o   <= refclk;
+fofb_mgtreset_o <= mgtreset;
+fofb_gtreset_o  <= gtreset;
 
 ----------------------------------------------
 -- re-arrange rx and tx channel up outputs
@@ -263,6 +283,7 @@ adcreset <= adcreset_i;
 ----------------------------------------------------------------------
 initreset <= not sysreset_n_i;
 
+with_clk_if: if CLK_BUFFERS generate
 fofb_cc_clk_if : entity work.fofb_cc_clk_if
 port map (
     refclk_n_i              => refclk_n_i,
@@ -280,6 +301,17 @@ port map (
     userclk_o               => userclk,
     userclk_2x_o            => userclk_2x
 );
+end generate;
+
+without_clk_if: if not CLK_BUFFERS generate
+    initclk                 <= ext_initclk_i;
+    refclk                  <= ext_refclk_i;
+    mgtreset                <= ext_mgtreset_i;
+    gtreset                 <= ext_gtreset_i;
+
+    userclk                 <= ext_userclk_i;
+    userclk_2x              <= ext_userclk_2x_i;
+end generate;
 
 ----------------------------------------------------------------------
 -- Generate LANE_COUNT Gigabit Transceiver Channels
