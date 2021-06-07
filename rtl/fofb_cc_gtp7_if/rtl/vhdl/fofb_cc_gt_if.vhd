@@ -329,6 +329,13 @@ quad_pll : entity work.gtpe7_common
         GTWESTREFCLK1_IN      => gtwestrefclk1
     );
 
+assert (REFCLK_INPUT = "REFCLK0" or REFCLK_INPUT = "REFCLK1" or
+    REFCLK_INPUT = "EASTREFCLK0" or REFCLK_INPUT = "EASTREFCLK1" or
+    REFCLK_INPUT = "WESTREFCLK0" or REFCLK_INPUT = "WESTREFCLK1")
+    report "[fofb_cc_gtp7_if/fofb_cc_gt_if]: Invalid REFCLK_INPUT(" & REFCLK_INPUT & ") selection." &
+        "Must be one of REFCLK0, REFCLK1, EASTREFCLK0, EASTREFCLK1, WESTREFCLK0 or WESTREFCLK1"
+    severity failure;
+
 refclk0_gen : if REFCLK_INPUT = "REFCLK0" generate
     gtrefclk0     <= refclk_i;
     gtrefclk1     <= '0';
