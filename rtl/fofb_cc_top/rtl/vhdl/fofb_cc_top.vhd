@@ -304,13 +304,24 @@ port map (
 end generate;
 
 without_clk_if: if not CLK_BUFFERS generate
-    initclk                 <= ext_initclk_i;
-    refclk                  <= ext_refclk_i;
-    mgtreset                <= ext_mgtreset_i;
-    gtreset                 <= ext_gtreset_i;
+fofb_cc_clk_if : entity work.fofb_cc_clk_if
+port map (
+    refclk_n_i              => '0',
+    refclk_p_i              => '0',
 
-    userclk                 <= ext_userclk_i;
-    userclk_2x              <= ext_userclk_2x_i;
+    gtreset_i               => initreset,
+    txoutclk_i              => txoutclk,
+    plllkdet_i              => plllkdet,
+
+    mgtreset_o              => mgtreset,
+    gtreset_o               => gtreset,
+
+    userclk_o               => userclk,
+    userclk_2x_o            => userclk_2x
+);
+
+initclk                 <= ext_initclk_i;
+refclk                  <= ext_refclk_i;
 end generate;
 
 ----------------------------------------------------------------------
