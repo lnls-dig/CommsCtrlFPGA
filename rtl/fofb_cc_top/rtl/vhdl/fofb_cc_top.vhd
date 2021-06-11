@@ -244,7 +244,7 @@ fofb_userclk_o    <= userclk;
 fofb_userclk_2x_o <= userclk_2x;
 fofb_userrst_o    <= sysreset;
 
-fofb_initclk_o  <= userclk;
+fofb_initclk_o  <= initclk;
 fofb_refclk_o   <= refclk;
 fofb_mgtreset_o <= mgtreset;
 fofb_gtreset_o  <= gtreset;
