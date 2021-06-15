@@ -23,10 +23,6 @@ entity fofb_cc_top_wrapper is
         -- Only used when CLK_BUFFERS := false
         ext_initclk_i           : in std_logic := '0';
         ext_refclk_i            : in std_logic := '0';
-        ext_mgtreset_i          : in std_logic := '0';
-        ext_gtreset_i           : in std_logic := '0';
-        ext_userclk_i           : in std_logic := '0';
-        ext_userclk_2x_i        : in std_logic := '0';
         -- clock and reset interface
         sysclk_i                : in  std_logic;
         -- FOFB communication controller configuration interface
@@ -93,10 +89,6 @@ fofb_cc_top : entity work.fofb_cc_top
         -- Only used when CLK_BUFFERS := false
         ext_initclk_i           => ext_initclk_i,
         ext_refclk_i            => ext_refclk_i,
-        ext_mgtreset_i          => ext_mgtreset_i,
-        ext_gtreset_i           => ext_gtreset_i,
-        ext_userclk_i           => ext_userclk_i,
-        ext_userclk_2x_i        => ext_userclk_2x_i,
 
         adcclk_i                => '0',
         adcreset_i              => '0',

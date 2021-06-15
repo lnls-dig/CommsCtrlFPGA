@@ -66,10 +66,6 @@ entity fofb_cc_top is
         -- Only used when CLK_BUFFERS := false
         ext_initclk_i           : in std_logic := '0';
         ext_refclk_i            : in std_logic := '0';
-        ext_mgtreset_i          : in std_logic := '0';
-        ext_gtreset_i           : in std_logic := '0';
-        ext_userclk_i           : in std_logic := '0';
-        ext_userclk_2x_i        : in std_logic := '0';
 
         -- clock and reset interface
         adcclk_i                : in std_logic;
