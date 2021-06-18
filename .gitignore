@@ -128,7 +128,6 @@ modelsim.ini
 /rtl/chipscope/7series/ila_fofb_cc_t8_d256_s16384
 /rtl/chipscope/7series/ila_fofb_cc_t8_d256_s8192_cap
 /rtl/chipscope/7series/ila_fofb_cc_t8_d256_s4096_cap
-/rtl/chipscope/7series/vio_din2_w64_dout2_w64
 
 ######################
 # HDLmake
