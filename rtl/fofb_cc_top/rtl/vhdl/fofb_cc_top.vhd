@@ -653,7 +653,8 @@ port map(
 
 CSCOPE_GEN : if (USE_CHIPSCOPE = true) generate
 
-ila_core_inst : entity work.ila_t8_d256_s8192_cap
+ila_core_inst : entity work.ila_fofb_cc_t8_d256_s8192_cap
+--port map (
 port map (
   clk             => userclk,
   probe0          => data,

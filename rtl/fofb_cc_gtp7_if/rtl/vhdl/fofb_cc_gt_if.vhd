@@ -416,7 +416,7 @@ quad_pll_reset : entity work.gtpe7_common_reset
 --
 CSCOPE_GEN : if (GTP7_IF_CSGEN = true) generate
 
-ila_core_inst : entity work.ila_t8_d256_s8192_cap
+ila_core_inst : entity work.ila_fofb_cc_t8_d256_s8192_cap
     port map (
         clk             => userclk,
         probe0          => data,
