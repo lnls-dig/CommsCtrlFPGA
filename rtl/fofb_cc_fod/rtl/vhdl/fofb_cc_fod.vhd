@@ -331,6 +331,11 @@ begin
             own_packet_to_inject <= pload_header & X"00000000" & X"00000000" & timeframe_cntr_i;
             own_xpos_to_store   <= timestamp_val_i;
             own_ypos_to_store   <= timestamp_val_i;
+        -- DISTRIBUTOR does not inject, just pass data forward
+        when DISTRIBUTOR =>
+            own_packet_to_inject <= (others => '0');
+            own_xpos_to_store   <= (others => '0');
+            own_ypos_to_store   <= (others => '0');
         when others =>
     end case;
 end process;
@@ -410,8 +415,12 @@ maskmemB_addrb <= fod_dat_i(NodeW+95 downto 96);
 fod_ok_n <= maskmemA_doutb(0) when (maskmem_sw = '0') else maskmemB_doutb(0);
 
 -- Time delayed timeframe_start pulse
+-- For DEVICE = DISTRIBUTOR, nothing is injected, data is passed along,
+-- as timeframe_inject = '0' -> timeframe_start = '0' -> timeframe_valid = '0'
+-- and, so nothing from ourselves is injected onto the network, which is
+-- what we want in the case of a DISTRIBUTOR
 timeframe_inject <= '1' when (timeframe_cnt = unsigned(timeframe_dly_i) and
-                    timeframe_valid_i = '1') else '0';
+                    timeframe_valid_i = '1') and DEVICE /= DISTRIBUTOR else '0';
 
 FodProcess : process(mgtclk_i)
 begin
@@ -467,7 +476,7 @@ fod_odat <= own_packet_to_inject when (timeframe_valid = '1') else
 
 -- X and Y position data to be stored from received nodes
 posmem_addra <= buffer_write_sw & std_logic_vector(bpmid)
-                when (timeframe_valid = '1') 
+                when (timeframe_valid = '1')
                 else buffer_write_sw & fod_id;
 
 posmem_wea <= timeframe_valid or (fod_idat_val and not fod_ok_n);
@@ -658,7 +667,7 @@ begin
 end process;
 
 ---------------------------------------------------------------------
--- Arrival time buffer : keeps track of min and max of arrival time 
+-- Arrival time buffer : keeps track of min and max of arrival time
 -- from each node ID. Single BRAM is used to store min and max values.
 -- It is clocked in mgt clock domain, and readback via SBC is controlled
 -- by toa_rden flag.
