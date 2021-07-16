@@ -158,12 +158,12 @@ signal rxf_empty_n          : std_logic_vector(LANE_COUNT-1 downto 0);
 signal rxf_full             : std_logic_vector(LANE_COUNT-1 downto 0);
 -- frame status
 signal timeframe_count      : std_logic_vector(31 downto 0) := (others=>'0');
-signal link_partners        : std_logic_2d_10(3 downto 0);
+signal link_partners        : std_logic_2d_10(LANE_COUNT-1 downto 0);
 signal timeframe_dly        : std_logic_vector(15 downto 0);
 -- channel status signals
-signal linkup               : std_logic_vector(7 downto 0);
-signal rx_linkup            : std_logic_vector(3 downto 0);
-signal tx_linkup            : std_logic_vector(3 downto 0);
+signal linkup               : std_logic_vector(2*LANE_COUNT-1 downto 0);
+signal rx_linkup            : std_logic_vector(LANE_COUNT-1 downto 0);
+signal tx_linkup            : std_logic_vector(LANE_COUNT-1 downto 0);
 -- system reset
 signal rx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
 signal tx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
@@ -171,11 +171,11 @@ signal tx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
 signal arbmux_dout          : std_logic_vector((32*PacketSize-1) downto 0);
 signal arbmux_dout_rdy      : std_logic;
 -- configuration signals
-signal mgt_powerdown        : std_logic_vector(3 downto 0);
-signal mgt_loopback         : std_logic_vector(7 downto 0);
+signal mgt_powerdown        : std_logic_vector(LANE_COUNT-1 downto 0);
+signal mgt_loopback         : std_logic_vector(2*LANE_COUNT-1 downto 0);
 -- time frame start signals
 signal int_timeframe_start  : std_logic := '0';
-signal ext_timeframe_start  : std_logic_vector(3 downto 0);
+signal ext_timeframe_start  : std_logic_vector(LANE_COUNT-1 downto 0);
 signal timeframe_start      : std_logic := '0';
 signal timeframe_end        : std_logic;
 signal timeframe_valid      : std_logic;
@@ -183,22 +183,22 @@ signal timeframe_valid      : std_logic;
 signal bpm_cc_xpos          : std_logic_2d_32(BPMS-1 downto 0);
 signal bpm_cc_ypos          : std_logic_2d_32(BPMS-1 downto 0);
 -- status info
-signal rx_max_data_count    : std_logic_2d_8(3 downto 0);
-signal tx_max_data_count    : std_logic_2d_8(3 downto 0);
+signal rx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
+signal tx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
 signal tx_fsm_busy          : std_logic_vector(LANE_COUNT-1 downto 0);
 signal rx_fsm_busy          : std_logic_vector(LANE_COUNT-1 downto 0);
-signal harderror_cnt        : std_logic_2d_16(3 downto 0);
-signal softerror_cnt        : std_logic_2d_16(3 downto 0);
-signal frameerror_cnt       : std_logic_2d_16(3 downto 0);
-signal rxpck_count          : std_logic_2d_16(3 downto 0);
-signal txpck_count          : std_logic_2d_16(3 downto 0);
+signal harderror_cnt        : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal softerror_cnt        : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal frameerror_cnt       : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal rxpck_count          : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal txpck_count          : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal bpm_count            : std_logic_vector(7 downto 0);
 signal fodprocess_time      : std_logic_vector(15 downto 0);
-signal link_up_i            : std_logic_vector(7 downto 0);
+signal link_up_i            : std_logic_vector(2*LANE_COUNT-1 downto 0);
 signal golden_orb_x         : std_logic_vector(31 downto 0);
 signal golden_orb_y         : std_logic_vector(31 downto 0);
-signal ext_timeframe_val    : std_logic_2d_16(3 downto 0);
-signal ext_timestamp_val    : std_logic_2d_32(3 downto 0);
+signal ext_timeframe_val    : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal ext_timestamp_val    : std_logic_2d_32(LANE_COUNT-1 downto 0);
 signal timestamp_val        : std_logic_vector(31 downto 0);
 signal bpmid                : std_logic_vector(NodeW-1 downto 0);
 signal timeframelen         : std_logic_vector(15 downto 0);
@@ -220,7 +220,7 @@ signal fofb_err_clear       : std_logic;
 
 signal initclk              : std_logic;
 signal initreset            : std_logic;
-signal rxpolarity           : std_logic_vector(3 downto 0);
+signal rxpolarity           : std_logic_vector(LANE_COUNT-1 downto 0);
 signal fai_psel_val         : std_logic_vector(31 downto 0);
 signal fofb_pos_datsel      : std_logic_vector(3 downto 0);
 
@@ -248,9 +248,15 @@ fofb_gtreset_o  <= gtreset;
 ----------------------------------------------
 -- re-arrange rx and tx channel up outputs
 ----------------------------------------------
-rx_linkup <= linkup(7) & linkup(5) & linkup(3) & linkup(1);
-tx_linkup <= linkup(6) & linkup(4) & linkup(2) & linkup(0);
-link_up_i <= tx_linkup & rx_linkup;
+GEN_RX_LINKUP : for i in 0 to LANE_COUNT-1 generate
+
+rx_linkup(i) <= linkup(2*i+1);
+tx_linkup(i) <= linkup(2*i);
+
+end generate;
+
+
+link_up_i <= tx_linkup(LANE_COUNT-1 downto 0) & rx_linkup(LANE_COUNT-1 downto 0);
 
 ----------------------------------------------
 -- enable all mgt transceivers on digital board
@@ -349,7 +355,7 @@ port map (
     plllkdet_o              => plllkdet,
     userclk_i               => userclk,
     userclk_2x_i            => userclk_2x,
-    rxpolarity_i            => rxpolarity(LANE_COUNT-1 downto 0),
+    rxpolarity_i            => rxpolarity,
 
     rxn_i                   => fai_rio_rdn_i,
     rxp_i                   => fai_rio_rdp_i,
@@ -530,6 +536,7 @@ end generate;
 ----------------------------------------------
 -- Configuration interface module
 ----------------------------------------------
+-- FIXME FIXME FIXME, using just 4 LANES!
 fofb_cc_cfg_if : entity work.fofb_cc_cfg_if
 generic map (
     ID                      => ID,
@@ -545,25 +552,25 @@ port map(
     fai_cfg_we_o            => fai_cfg_we_o,
     bpmid_o                 => bpmid,
     timeframe_len_o         => timeframelen,
-    powerdown_o             => mgt_powerdown,
-    loopback_o              => mgt_loopback,
+    powerdown_o             => mgt_powerdown(3 downto 0),
+    loopback_o              => mgt_loopback(7 downto 0),
     timeframe_dly_o         => timeframe_dly,
-    rxpolarity_o            => rxpolarity,
+    rxpolarity_o            => rxpolarity(3 downto 0),
     fai_psel_val_o          => fai_psel_val,
     fofb_dat_sel_o          => fofb_pos_datsel,
     pmc_heart_beat_i        => X"00000000",
-    link_partners_i         => link_partners,
-    link_up_i               => link_up_i,
+    link_partners_i         => link_partners(3 downto 0),
+    link_up_i               => link_up_i(7 downto 0),
     timeframe_cnt_i         => timeframe_count(15 downto 0),
-    harderror_cnt_i         => harderror_cnt,
-    softerror_cnt_i         => softerror_cnt,
-    frameerror_cnt_i        => frameerror_cnt,
-    rxpck_cnt_i             => rxpck_count,
-    txpck_cnt_i             => txpck_count,
+    harderror_cnt_i         => harderror_cnt(3 downto 0),
+    softerror_cnt_i         => softerror_cnt(3 downto 0),
+    frameerror_cnt_i        => frameerror_cnt(3 downto 0),
+    rxpck_cnt_i             => rxpck_count(3 downto 0),
+    txpck_cnt_i             => txpck_count(3 downto 0),
     bpmcount_i              => bpm_count,
     fodprocess_time_i       => fodprocess_time,
-    rx_max_data_count_i     => rx_max_data_count,
-    tx_max_data_count_i     => tx_max_data_count,
+    rx_max_data_count_i     => rx_max_data_count(3 downto 0),
+    tx_max_data_count_i     => tx_max_data_count(3 downto 0),
     coeff_x_addr_i          => coeff_x_addr_i,
     coeff_x_dat_o           => coeff_x_dat_o,
     coeff_y_addr_i          => coeff_y_addr_i,
