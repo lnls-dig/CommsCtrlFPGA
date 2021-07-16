@@ -29,12 +29,17 @@ function zeros(N: integer) return std_logic_vector;
 -- Function to transpose CRC & Data
 function transpose_data(inp : std_logic_vector) return std_logic_vector;
 function tostd(inp : boolean) return std_logic;
+function tonatural(inp : boolean) return natural;
 -- Function for log2
 function log2_ceil(N : natural) return positive;
 function log2_size(N : natural) return positive;
 -- Functions for Gray encoder/decoder
 function gray_encode(x : std_logic_vector) return std_logic_vector;
 function gray_decode(x : std_logic_vector; step : natural) return std_logic_vector;
+-- Functions for ORing an std_logic_vector
+function vector_OR(x : std_logic_vector) return std_logic;
+-- Functions for ANDing an std_logic_vector
+function vector_AND(x : std_logic_vector) return std_logic;
 -- Type definitions
 -- 2D arrays
 type std_logic_2d       is array (natural range <>) of std_logic_vector(31 downto 0);
@@ -50,7 +55,7 @@ type std_logic_2d_64    is array (natural range <>) of std_logic_vector(63 downt
 type std_logic_2d_128   is array (natural range <>) of std_logic_vector(127 downto 0);
 type sys_state_type is (disabled, idle, enabled);
 
-type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM);
+type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM, DISTRIBUTOR);
 
 --------------------------- BPM Firmware Version -----------------------------
 constant BPMFirmwareVersion : std_logic_vector(31 downto 0) := FPGAFirmwareVersion;
@@ -248,6 +253,15 @@ begin
     end if;
 end tostd;
 
+function tonatural(inp : boolean) return natural is
+begin
+    if inp then
+        return 1;
+    else
+        return 0;
+    end if;
+end tonatural;
+
 ----------------------------------------------------------------------
 -- Function for log2
 ----------------------------------------------------------------------
@@ -291,5 +305,39 @@ begin
     return gray_decode(y xor z, step+step);
   end if;
 end gray_decode;
+
+------------------------------------------------------------------------------
+-- Functions for ORing a std_logic_vector
+------------------------------------------------------------------------------
+function vector_OR(x : std_logic_vector)
+  return std_logic
+is
+  constant len : integer := x'length;
+  constant mid : integer := len / 2;
+  alias y : std_logic_vector(len-1 downto 0) is x;
+begin
+  if len = 1
+  then return y(0);
+  else return vector_OR(y(len-1 downto mid)) or
+              vector_OR(y(mid-1 downto 0));
+  end if;
+end vector_OR;
+
+------------------------------------------------------------------------------
+-- Functions for ANDing a std_logic_vector
+------------------------------------------------------------------------------
+function vector_AND(x : std_logic_vector)
+  return std_logic
+is
+  constant len : integer := x'length;
+  constant mid : integer := len / 2;
+  alias y : std_logic_vector(len-1 downto 0) is x;
+begin
+  if len = 1
+  then return y(0);
+  else return vector_AND(y(len-1 downto mid)) and
+              vector_AND(y(mid-1 downto 0));
+  end if;
+end vector_AND;
 
 end fofb_cc_pkg;
