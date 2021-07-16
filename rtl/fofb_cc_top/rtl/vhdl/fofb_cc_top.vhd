@@ -41,6 +41,9 @@ entity fofb_cc_top is
         INTERLEAVED             : boolean := false;
         -- Use simpler/parallel FA IF or not
         USE_PARALLEL_FA_IF      : boolean := false;
+        -- Use external DCC interface to inject data.
+        -- Overrides FA_IF, all types
+        USE_EXT_CC_IF           : boolean := false;
         -- Extended FAI interface for FOFB
         EXTENDED_CONF_BUF       : boolean := false;
         -- Absolute or Difference position data
@@ -73,13 +76,24 @@ entity fofb_cc_top is
         sysclk_i                : in std_logic;
         sysreset_n_i            : in std_logic;
         -- fast acquisition data interface. Used when USE_PARALLEL_FA_IF = false
+        -- and USE_EXT_CC_IF = false
         fai_fa_block_start_i    : in std_logic := '0';
         fai_fa_data_valid_i     : in std_logic := '0';
         fai_fa_d_i              : in std_logic_vector(FAI_DW-1 downto 0) := (others => '0');
         -- fast acquisition parallel data interface. Used when USE_PARALLEL_FA_IF = true
+        -- and USE_EXT_CC_IF = false
         fai_fa_pl_data_valid_i  : in std_logic := '0';
         fai_fa_pl_d_x_i         : in std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
         fai_fa_pl_d_y_i         : in std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
+        -- external CC interface for data from another DCC. Used
+        -- when the other DCC is typically in a DISTRIBUTOR mode and
+        -- the other one (using this inteface) is part of another DCC
+        -- network that receives data from both externl GT links and
+        -- DCC. Used when USE_EXT_CC_IF = true. Overrides USE_PARALLEL_FA_IF
+        ext_cc_clk_i            : in std_logic := '0';
+        ext_cc_rst_n_i          : in std_logic := '1';
+        ext_cc_dat_i            : in std_logic_vector((32*PacketSize-1) downto 0) := (others => '0');
+        ext_cc_dat_val_i        : in std_logic := '0';
         -- FOFB communication controller configuration interface
         fai_cfg_a_o             : out std_logic_vector(10 downto 0);
         fai_cfg_d_o             : out std_logic_vector(31 downto 0);
@@ -137,6 +151,8 @@ architecture structural of fofb_cc_top is
 -----------------------------------------
 -- Signal declarations
 
+constant EXTRA_LANE         : natural := tonatural(USE_EXT_CC_IF);
+
 -- chipscope
 signal control              : std_logic_vector(35 downto 0);
 signal data                 : std_logic_vector(255 downto 0);
@@ -150,19 +166,24 @@ signal txf_dout             : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal txf_full             : std_logic_vector(LANE_COUNT-1 downto 0);
 -- rx fifo
 signal rxf_din              : std_logic_2d_16(LANE_COUNT-1 downto 0);
-signal rxf_dout             : std_logic_2d_128(LANE_COUNT-1 downto 0);
+signal rxf_dout             : std_logic_2d_128(LANE_COUNT+EXTRA_LANE-1 downto 0);
 signal rxf_wr_en            : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rxf_rd_en            : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rxf_empty            : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rxf_empty_n          : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rxf_rd_en            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rxf_empty            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rxf_empty_n          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 signal rxf_full             : std_logic_vector(LANE_COUNT-1 downto 0);
+-- external data interface
+signal ext_cc_dout          : std_logic_vector((32*PacketSize-1) downto 0);
+signal ext_cc_dout_val      : std_logic;
+signal ext_cc_dat_rd_en     : std_logic;
+signal ext_cc_dat_empty     : std_logic;
 -- frame status
 signal timeframe_count      : std_logic_vector(31 downto 0) := (others=>'0');
 signal link_partners        : std_logic_2d_10(LANE_COUNT-1 downto 0);
 signal timeframe_dly        : std_logic_vector(15 downto 0);
 -- channel status signals
 signal linkup               : std_logic_vector(2*LANE_COUNT-1 downto 0);
-signal rx_linkup            : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rx_linkup            : std_logic_vector(LANE_COUNT-1+EXTRA_LANE downto 0);
 signal tx_linkup            : std_logic_vector(LANE_COUNT-1 downto 0);
 -- system reset
 signal rx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
@@ -205,6 +226,7 @@ signal timeframelen         : std_logic_vector(15 downto 0);
 
 signal refclk               : std_logic;
 signal sysreset             : std_logic;
+signal sysreset_n           : std_logic;
 signal adcreset             : std_logic;
 signal txoutclk             : std_logic;
 signal plllkdet             : std_logic;
@@ -255,6 +277,14 @@ tx_linkup(i) <= linkup(2*i);
 
 end generate;
 
+WITH_EXTRA_LANES_RX_LINKUP : if (USE_EXT_CC_IF = true) generate
+
+-- generate rx_linkup for EXTRA_LANE. As they come
+-- from other DCC just say they are active and use the
+-- "valid" signal to qualify the data.
+rx_linkup(LANE_COUNT-1+EXTRA_LANE) <= '1';
+
+end generate;
 
 link_up_i <= tx_linkup(LANE_COUNT-1 downto 0) & rx_linkup(LANE_COUNT-1 downto 0);
 
@@ -278,6 +308,7 @@ fofb_err_clear <= fai_cfg_val_i(2);
 fai_cfg_act_part <= fai_cfg_val_i(0);
 
 sysreset <= mgtreset or not fofb_cc_enable;
+sysreset_n <= not sysreset;
 adcreset <= adcreset_i;
 
 ----------------------------------------------------------------------
@@ -436,13 +467,55 @@ port map (
 );
 end generate;
 
+WITH_EXTRA_LANES_FIFO : if (USE_EXT_CC_IF = true) generate
+
+-- Additional FIFO buffer for EXTRA_LANE.
+-- Needed because we can expect more packets from this interface
+-- than arbmux can consume
+fofb_cc_rx_buffer_extra_lane: entity work.fofb_cc_async_fwft_fifo
+generic map (
+    g_data_width              => 32*PacketSize,
+    g_size                    => 8,
+    g_almost_empty_threshold  => 2,
+    g_almost_full_threshold   => 6
+)
+port map(
+    -- write port
+    wr_clk_i                  => ext_cc_clk_i,
+    wr_rst_n_i                => ext_cc_rst_n_i,
+    wr_data_i                 => ext_cc_dat_i,
+    wr_en_i                   => ext_cc_dat_val_i,
+
+    -- read port
+    rd_clk_i                  => userclk,
+    rd_rst_n_i                => sysreset_n,
+    rd_data_o                 => ext_cc_dout,
+    rd_valid_o                => ext_cc_dout_val,
+    rd_en_i                   => ext_cc_dat_rd_en,
+    rd_empty_o                => ext_cc_dat_empty
+);
+
+-- generate rx_linkup for EXTRA_LANE. As they come
+-- from other DCC just say they are active and use the
+-- "valid" signal to qualify the data.
+rx_linkup(LANE_COUNT+EXTRA_LANE-1) <= '1';
+
+rxf_dout(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dout;
+rxf_empty(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dat_empty;
+
+-- ack receiving current word. Fetch next one if not empty.
+-- FWFT enable
+ext_cc_dat_rd_en <= rxf_rd_en(LANE_COUNT+EXTRA_LANE-1);
+
+end generate;
+
 ----------------------------------------------
 -- cc input buffer arbiter. inputs are connected to
 -- rx fifo.
 ----------------------------------------------
 fofb_cc_arbmux : entity work.fofb_cc_arbmux
 generic map (
-    LaneCount               => LANE_COUNT
+    LaneCount               => LANE_COUNT + EXTRA_LANE
 )
 port map (
     mgt_clk                 => userclk,
@@ -450,7 +523,7 @@ port map (
     data_in                 => rxf_dout,
     data_in_rdy             => rxf_empty_n,
     rx_fifo_rd_en           => rxf_rd_en,
-    channel_up              => rx_linkup(LANE_COUNT-1 downto 0),
+    channel_up              => rx_linkup(LANE_COUNT+EXTRA_LANE-1 downto 0),
     data_out                => arbmux_dout,
     data_out_rdy            => arbmux_dout_rdy,
     timeframe_valid_i       => timeframe_valid
@@ -580,6 +653,8 @@ port map(
     fai_cfg_val_i           => fai_cfg_val_i
 );
 
+WITH_FA_IF : if (USE_EXT_CC_IF = false) generate
+
 ----------------------------------------------
 -- fa interface module, removed by synthesizer for PMC
 ----------------------------------------------
@@ -633,6 +708,8 @@ port map(
 );
 
 end generate;
+
+end generate; -- USE_EXT_CC_IF = false
 
 ----------------------------------------------
 -- Control module for tfs inputs from libera and mgts

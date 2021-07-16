@@ -17,7 +17,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.fofb_cc_pkg.all;   -- DLS FOFB package 
+use work.fofb_cc_pkg.all;   -- DLS FOFB package
 
 -----------------------------------------------
 --  Entity declaration
@@ -32,7 +32,7 @@ entity fofb_cc_frame_cntrl is
         mgtreset_i          : in  std_logic;
         -- Time frame start input
         tfs_bpm_i           : in  std_logic;
-        tfs_pmc_i           : in  std_logic_vector(3 downto 0);
+        tfs_pmc_i           : in  std_logic_vector(LaneCount-1 downto 0);
         tfs_override_i      : in  std_logic := '0';
         -- Time frame control outputs
         timeframe_len_i     : in  std_logic_vector(15 downto 0);
@@ -40,8 +40,8 @@ entity fofb_cc_frame_cntrl is
         timeframe_end_o     : out std_logic;
         timeframe_valid_o   : out std_logic;
         -- Timeframe number and timestamp information from PMC
-        pmc_timeframe_cntr_i: in  std_logic_2d_16(3 downto 0);
-        pmc_timestamp_val_i : in  std_logic_2d_32(3 downto 0);
+        pmc_timeframe_cntr_i: in  std_logic_2d_16(LaneCount-1 downto 0);
+        pmc_timestamp_val_i : in  std_logic_2d_32(LaneCount-1 downto 0);
         -- System timeframe count and timestamp information
         timeframe_cntr_o    : out std_logic_vector(31 downto 0);
         timestamp_value_o   : out std_logic_vector(31 downto 0)
@@ -67,6 +67,17 @@ signal counter_16bit        : unsigned(15 downto 0);
 signal counter_10bit        : unsigned(9 downto 0);
 signal timeframe_valid      : std_logic;
 signal timeframe_valid_prev : std_logic;
+
+
+function onehot_decode(x : std_logic_vector; size : integer) return std_logic_vector is
+begin
+    for j in 0 to x'left loop
+        if x(j) /= '0' then
+            return std_logic_vector(to_unsigned(j, size));
+        end if;
+    end loop;  -- i
+    return std_logic_vector(to_unsigned(0, size));
+end onehot_decode;
 
 begin
 
@@ -111,19 +122,8 @@ begin
             timestamp_value_o <= (others => '0');
         else
             if (timeframe_state = idle) then
-                if (tfs_pmc_i(0) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(0);
-                    timestamp_value_o <= pmc_timestamp_val_i(0);
-                elsif (tfs_pmc_i(1) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(1);
-                    timestamp_value_o <= pmc_timestamp_val_i(1);
-                elsif (tfs_pmc_i(2) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(2);
-                    timestamp_value_o <= pmc_timestamp_val_i(2);
-                elsif (tfs_pmc_i(3) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(3);
-                    timestamp_value_o <= pmc_timestamp_val_i(3);
-                end if;
+                pmc_timeframe_val  <= pmc_timeframe_cntr_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
+                timestamp_value_o <= pmc_timestamp_val_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
             end if;
         end if;
     end if;
