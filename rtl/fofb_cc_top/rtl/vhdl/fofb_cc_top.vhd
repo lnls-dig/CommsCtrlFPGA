@@ -469,30 +469,31 @@ end generate;
 
 WITH_EXTRA_LANES_FIFO : if (USE_EXT_CC_IF = true) generate
 
--- Additional FIFO buffer for EXTRA_LANE.
--- Needed because we can expect more packets from this interface
--- than arbmux can consume
-fofb_cc_rx_buffer_extra_lane: entity work.fofb_cc_async_fwft_fifo
+-- Check if packet belongs to this frame and if it does store in a async
+-- FWFT fifo for arbmux usage
+fofb_cc_dos : entity work.fofb_cc_dos
 generic map (
-    g_data_width              => 32*PacketSize,
-    g_size                    => 8,
-    g_almost_empty_threshold  => 2,
-    g_almost_full_threshold   => 6
+    FIFO_DATA_WIDTH              => 32*PacketSize,
+    FIFO_SIZE                    => 8,
+    FIFO_ALMOST_EMPTY_THRESHOLD  => 2,
+    FIFO_ALMOST_FULL_THRESHOLD   => 6
 )
 port map(
-    -- write port
-    wr_clk_i                  => ext_cc_clk_i,
-    wr_rst_n_i                => ext_cc_rst_n_i,
-    wr_data_i                 => ext_cc_dat_i,
-    wr_en_i                   => ext_cc_dat_val_i,
+    ext_cc_clk_i                 => ext_cc_clk_i,
+    ext_cc_rst_n_i               => ext_cc_rst_n_i,
+    ext_cc_dat_i                 => ext_cc_dat_i,
+    ext_cc_dat_val_i             => ext_cc_dat_val_i,
 
-    -- read port
-    rd_clk_i                  => userclk,
-    rd_rst_n_i                => sysreset_n,
-    rd_data_o                 => ext_cc_dout,
-    rd_valid_o                => ext_cc_dout_val,
-    rd_en_i                   => ext_cc_dat_rd_en,
-    rd_empty_o                => ext_cc_dat_empty
+    timeframe_start_i            => timeframe_start,
+    timeframe_valid_i            => timeframe_valid,
+    timeframe_count_i            => timeframe_count(15 downto 0),
+
+    dos_clk_i                    => userclk,
+    dos_rst_n_i                  => sysreset_n,
+    dos_data_o                   => ext_cc_dout,
+    dos_valid_o                  => ext_cc_dout_val,
+    dos_en_i                     => ext_cc_dat_rd_en,
+    dos_empty_o                  => ext_cc_dat_empty
 );
 
 -- generate rx_linkup for EXTRA_LANE. As they come
