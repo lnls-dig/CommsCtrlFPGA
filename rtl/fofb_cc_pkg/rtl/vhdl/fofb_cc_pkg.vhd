@@ -61,6 +61,10 @@ type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM, DISTRIBUTOR);
 constant BPMFirmwareVersion : std_logic_vector(31 downto 0) := FPGAFirmwareVersion;
 ------------------------------------------------------------------------------
 
+--------------------------- DCC packet fields -----------------------------
+constant def_PacketTimeframeCntr16MSB : natural := 127;
+constant def_PacketTimeframeCntr16LSB : natural := 112;
+
 ---------------------------------------------------
 -- Default parameter values
 ---------------------------------------------------
