@@ -1,6 +1,6 @@
 ----------------------------------------------------------------------------
 --  Project      : Diamond FOFB Communication Controller
---  Filename     : fofb_cc_dos.vhd
+--  Filename     : fofb_cc_td_if.vhd
 --  Purpose      : FA rate data interface
 --  Author       : Lucas Russo
 ----------------------------------------------------------------------------
@@ -23,7 +23,7 @@ use work.fofb_cc_pkg.all;           -- Diamond FOFB package
 -----------------------------------------------
 --  Entity declaration
 -----------------------------------------------
-entity fofb_cc_dos is
+entity fofb_cc_td_if is
     generic (
         FIFO_DATA_WIDTH              : natural;
         FIFO_SIZE                    : natural;
@@ -38,21 +38,21 @@ entity fofb_cc_dos is
 
         timeframe_start_o            : out std_logic;
 
-        dos_clk_i                    : in  std_logic;
-        dos_rst_n_i                  : in  std_logic;
-        dos_data_o                   : out std_logic_vector((32*PacketSize-1) downto 0);
-        dos_valid_o                  : out std_logic;
-        dos_en_i                     : in  std_logic;
-        dos_empty_o                  : out std_logic
+        td_if_clk_i                  : in  std_logic;
+        td_if_rst_n_i                : in  std_logic;
+        td_if_data_o                 : out std_logic_vector((32*PacketSize-1) downto 0);
+        td_if_valid_o                : out std_logic;
+        td_if_en_i                   : in  std_logic;
+        td_if_empty_o                : out std_logic
     );
-end fofb_cc_dos;
+end fofb_cc_td_if;
 
 -----------------------------------------------
 --  Architecture declaration
 -----------------------------------------------
-architecture rtl of fofb_cc_dos is
+architecture rtl of fofb_cc_td_if is
 
-signal dos_valid                    : std_logic;
+signal td_if_valid                    : std_logic;
 
 begin
 
@@ -73,18 +73,18 @@ port map(
     wr_en_i                   => ext_cc_dat_val_i,
 
     -- read port
-    rd_clk_i                  => dos_clk_i,
-    rd_rst_n_i                => dos_rst_n_i,
-    rd_data_o                 => dos_data_o,
-    rd_valid_o                => dos_valid,
-    rd_en_i                   => dos_en_i,
-    rd_empty_o                => dos_empty_o
+    rd_clk_i                  => td_if_clk_i,
+    rd_rst_n_i                => td_if_rst_n_i,
+    rd_data_o                 => td_if_data_o,
+    rd_valid_o                => td_if_valid,
+    rd_en_i                   => td_if_en_i,
+    rd_empty_o                => td_if_empty_o
 );
 
-dos_valid_o <= dos_valid;
+td_if_valid_o <= td_if_valid;
 -- it doesn't matter if this signal is not 1-cc long, nor that
 -- we will possibly generate more than 1 in a timeframe. frame_cntrl
 -- will only use the first timeframe_start signal detected
-timeframe_start_o <= dos_valid;
+timeframe_start_o <= td_if_valid;
 
 end rtl;

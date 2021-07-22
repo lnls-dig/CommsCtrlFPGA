@@ -197,7 +197,7 @@ signal mgt_loopback         : std_logic_vector(2*LANE_COUNT-1 downto 0);
 -- time frame start signals
 signal int_timeframe_start  : std_logic := '0';
 signal ext_timeframe_start  : std_logic_vector(LANE_COUNT-1 downto 0);
-signal dos_timeframe_start  : std_logic := '0';
+signal td_if_timeframe_start : std_logic := '0';
 signal timeframe_start      : std_logic := '0';
 signal timeframe_end        : std_logic;
 signal timeframe_valid      : std_logic;
@@ -472,7 +472,7 @@ WITH_EXTRA_LANES_FIFO : if (USE_EXT_CC_IF = true) generate
 
 -- Check if packet belongs to this frame and if it does store in a async
 -- FWFT fifo for arbmux usage
-fofb_cc_dos : entity work.fofb_cc_dos
+fofb_cc_td_if : entity work.fofb_cc_td_if
 generic map (
     FIFO_DATA_WIDTH              => 32*PacketSize,
     FIFO_SIZE                    => 8,
@@ -485,14 +485,14 @@ port map(
     ext_cc_dat_i                 => ext_cc_dat_i,
     ext_cc_dat_val_i             => ext_cc_dat_val_i,
 
-    timeframe_start_o            => dos_timeframe_start,
+    timeframe_start_o            => td_if_timeframe_start,
 
-    dos_clk_i                    => userclk,
-    dos_rst_n_i                  => sysreset_n,
-    dos_data_o                   => ext_cc_dout,
-    dos_valid_o                  => ext_cc_dout_val,
-    dos_en_i                     => ext_cc_dat_rd_en,
-    dos_empty_o                  => ext_cc_dat_empty
+    td_if_clk_i                    => userclk,
+    td_if_rst_n_i                  => sysreset_n,
+    td_if_data_o                   => ext_cc_dout,
+    td_if_valid_o                  => ext_cc_dout_val,
+    td_if_en_i                     => ext_cc_dat_rd_en,
+    td_if_empty_o                  => ext_cc_dat_empty
 );
 
 -- generate rx_linkup for EXTRA_LANE. As they come
@@ -724,7 +724,7 @@ port map(
     mgtreset_i              => sysreset,
     tfs_bpm_i               => int_timeframe_start,
     tfs_pmc_i               => ext_timeframe_start,
-    tfs_dos_i               => dos_timeframe_start,
+    tfs_td_if_i             => td_if_timeframe_start,
     tfs_override_i          => fofb_tfs_override,
     timeframe_len_i         => timeframelen,
     timeframe_valid_o       => timeframe_valid,
