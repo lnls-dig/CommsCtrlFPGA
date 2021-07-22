@@ -36,9 +36,7 @@ entity fofb_cc_dos is
         ext_cc_dat_i                 : in  std_logic_vector((32*PacketSize-1) downto 0);
         ext_cc_dat_val_i             : in  std_logic;
 
-        timeframe_start_i            : in std_logic;
-        timeframe_valid_i            : in std_logic;
-        timeframe_count_i            : in std_logic_vector(15 downto 0);
+        timeframe_start_o            : out std_logic;
 
         dos_clk_i                    : in  std_logic;
         dos_rst_n_i                  : in  std_logic;
@@ -54,31 +52,9 @@ end fofb_cc_dos;
 -----------------------------------------------
 architecture rtl of fofb_cc_dos is
 
-signal ext_cc_dat_d1                : std_logic_vector((32*PacketSize-1) downto 0);
-signal ext_cc_dat_val_d1            : std_logic;
+signal dos_valid                    : std_logic;
 
 begin
-
--- Check if packet is within a valid timeframe and if the
--- packet timestamp belongs in the current timeframe.
-p_discard_or_store : process(ext_cc_clk_i)
-begin
-    if rising_edge(ext_cc_clk_i) then
-        if ext_cc_rst_n_i = '0' then
-            ext_cc_dat_d1 <= (others => '0');
-            ext_cc_dat_val_d1 <= '0';
-        else
-            if (ext_cc_dat_i(def_PacketTimeframeCntr16MSB downto
-                             def_PacketTimeframeCntr16MSB) = timeframe_count_i and
-                    timeframe_valid_i = '1') then
-                ext_cc_dat_d1 <= ext_cc_dat_i;
-                ext_cc_dat_val_d1 <= ext_cc_dat_val_i;
-            else
-                ext_cc_dat_val_d1 <= '0';
-            end if;
-        end if;
-    end if;
-end process;
 
 -- Async FIFO for both CDC and buffering data for ARBMUX which
 -- is unbuffered
@@ -93,16 +69,22 @@ port map(
     -- write port
     wr_clk_i                  => ext_cc_clk_i,
     wr_rst_n_i                => ext_cc_rst_n_i,
-    wr_data_i                 => ext_cc_dat_d1,
-    wr_en_i                   => ext_cc_dat_val_d1,
+    wr_data_i                 => ext_cc_dat_i,
+    wr_en_i                   => ext_cc_dat_val_i,
 
     -- read port
     rd_clk_i                  => dos_clk_i,
     rd_rst_n_i                => dos_rst_n_i,
     rd_data_o                 => dos_data_o,
-    rd_valid_o                => dos_valid_o,
+    rd_valid_o                => dos_valid,
     rd_en_i                   => dos_en_i,
     rd_empty_o                => dos_empty_o
 );
+
+dos_valid_o <= dos_valid;
+-- it doesn't matter if this signal is not 1-cc long, nor that
+-- we will possibly generate more than 1 in a timeframe. frame_cntrl
+-- will only use the first timeframe_start signal detected
+timeframe_start_o <= dos_valid;
 
 end rtl;

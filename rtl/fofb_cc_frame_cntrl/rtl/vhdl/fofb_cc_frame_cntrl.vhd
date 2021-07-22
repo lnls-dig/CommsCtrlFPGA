@@ -33,6 +33,7 @@ entity fofb_cc_frame_cntrl is
         -- Time frame start input
         tfs_bpm_i           : in  std_logic;
         tfs_pmc_i           : in  std_logic_vector(LaneCount-1 downto 0);
+        tfs_dos_i           : in  std_logic;
         tfs_override_i      : in  std_logic := '0';
         -- Time frame control outputs
         timeframe_len_i     : in  std_logic_vector(15 downto 0);
@@ -103,6 +104,8 @@ begin
     OR_bits: for N IN 1 TO (LaneCount-1) loop
         tmp := tmp or tfs_pmc_i(N);
     end loop;
+
+    tmp := tmp or tfs_dos_i;
 
     tfbit_mgt_ored <= tmp;
 end process;

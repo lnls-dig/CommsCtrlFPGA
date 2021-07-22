@@ -197,6 +197,7 @@ signal mgt_loopback         : std_logic_vector(2*LANE_COUNT-1 downto 0);
 -- time frame start signals
 signal int_timeframe_start  : std_logic := '0';
 signal ext_timeframe_start  : std_logic_vector(LANE_COUNT-1 downto 0);
+signal dos_timeframe_start  : std_logic := '0';
 signal timeframe_start      : std_logic := '0';
 signal timeframe_end        : std_logic;
 signal timeframe_valid      : std_logic;
@@ -484,9 +485,7 @@ port map(
     ext_cc_dat_i                 => ext_cc_dat_i,
     ext_cc_dat_val_i             => ext_cc_dat_val_i,
 
-    timeframe_start_i            => timeframe_start,
-    timeframe_valid_i            => timeframe_valid,
-    timeframe_count_i            => timeframe_count(15 downto 0),
+    timeframe_start_o            => dos_timeframe_start,
 
     dos_clk_i                    => userclk,
     dos_rst_n_i                  => sysreset_n,
@@ -725,6 +724,7 @@ port map(
     mgtreset_i              => sysreset,
     tfs_bpm_i               => int_timeframe_start,
     tfs_pmc_i               => ext_timeframe_start,
+    tfs_dos_i               => dos_timeframe_start,
     tfs_override_i          => fofb_tfs_override,
     timeframe_len_i         => timeframelen,
     timeframe_valid_o       => timeframe_valid,
