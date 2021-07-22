@@ -221,6 +221,8 @@ signal golden_orb_x         : std_logic_vector(31 downto 0);
 signal golden_orb_y         : std_logic_vector(31 downto 0);
 signal ext_timeframe_val    : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal ext_timestamp_val    : std_logic_2d_32(LANE_COUNT-1 downto 0);
+signal td_if_timeframe_val  : std_logic_vector(15 downto 0);
+signal td_if_timestamp_val  : std_logic_vector(31 downto 0);
 signal timestamp_val        : std_logic_vector(31 downto 0);
 signal bpmid                : std_logic_vector(NodeW-1 downto 0);
 signal timeframelen         : std_logic_vector(15 downto 0);
@@ -486,13 +488,15 @@ port map(
     ext_cc_dat_val_i             => ext_cc_dat_val_i,
 
     timeframe_start_o            => td_if_timeframe_start,
+    timeframe_val_o              => td_if_timeframe_val,
+    timestamp_val_o              => td_if_timestamp_val,
 
-    td_if_clk_i                    => userclk,
-    td_if_rst_n_i                  => sysreset_n,
-    td_if_data_o                   => ext_cc_dout,
-    td_if_valid_o                  => ext_cc_dout_val,
-    td_if_en_i                     => ext_cc_dat_rd_en,
-    td_if_empty_o                  => ext_cc_dat_empty
+    td_if_clk_i                  => userclk,
+    td_if_rst_n_i                => sysreset_n,
+    td_if_data_o                 => ext_cc_dout,
+    td_if_valid_o                => ext_cc_dout_val,
+    td_if_en_i                   => ext_cc_dat_rd_en,
+    td_if_empty_o                => ext_cc_dat_empty
 );
 
 -- generate rx_linkup for EXTRA_LANE. As they come
@@ -732,6 +736,8 @@ port map(
     timeframe_end_o         => timeframe_end,
     pmc_timeframe_cntr_i    => ext_timeframe_val,
     pmc_timestamp_val_i     => ext_timestamp_val,
+    td_if_timeframe_cntr_i  => td_if_timeframe_val,
+    td_if_timestamp_val_i   => td_if_timestamp_val,
     timeframe_cntr_o        => timeframe_count,
     timestamp_value_o       => timestamp_val
 );

@@ -37,6 +37,8 @@ entity fofb_cc_td_if is
         ext_cc_dat_val_i             : in  std_logic;
 
         timeframe_start_o            : out std_logic;
+        timeframe_val_o              : out std_logic_vector(15 downto 0);
+        timestamp_val_o              : out std_logic_vector(31 downto 0);
 
         td_if_clk_i                  : in  std_logic;
         td_if_rst_n_i                : in  std_logic;
@@ -52,6 +54,7 @@ end fofb_cc_td_if;
 -----------------------------------------------
 architecture rtl of fofb_cc_td_if is
 
+signal td_if_data                     : std_logic_vector((32*PacketSize-1) downto 0);
 signal td_if_valid                    : std_logic;
 
 begin
@@ -75,12 +78,19 @@ port map(
     -- read port
     rd_clk_i                  => td_if_clk_i,
     rd_rst_n_i                => td_if_rst_n_i,
-    rd_data_o                 => td_if_data_o,
+    rd_data_o                 => td_if_data,
     rd_valid_o                => td_if_valid,
     rd_en_i                   => td_if_en_i,
     rd_empty_o                => td_if_empty_o
 );
 
+-- extract timeframe_counter from packet, just like in GT_IF
+timeframe_val_o <= td_if_data(def_PacketTimeframeCntr16MSB downto
+                              def_PacketTimeframeCntr16LSB);
+timestamp_val_o <= td_if_data(def_PacketTimeStampMSB downto
+                              def_PacketTimeStampLSB);
+
+td_if_data_o  <= td_if_data;
 td_if_valid_o <= td_if_valid;
 -- it doesn't matter if this signal is not 1-cc long, nor that
 -- we will possibly generate more than 1 in a timeframe. frame_cntrl

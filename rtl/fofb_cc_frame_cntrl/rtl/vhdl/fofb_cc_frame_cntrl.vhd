@@ -43,6 +43,9 @@ entity fofb_cc_frame_cntrl is
         -- Timeframe number and timestamp information from PMC
         pmc_timeframe_cntr_i: in  std_logic_2d_16(LaneCount-1 downto 0);
         pmc_timestamp_val_i : in  std_logic_2d_32(LaneCount-1 downto 0);
+        -- Timeframe number from TD_IF
+        td_if_timeframe_cntr_i : in std_logic_vector(15 downto 0);
+        td_if_timestamp_val_i : in std_logic_vector(31 downto 0);
         -- System timeframe count and timestamp information
         timeframe_cntr_o    : out std_logic_vector(31 downto 0);
         timestamp_value_o   : out std_logic_vector(31 downto 0)
@@ -63,6 +66,9 @@ signal timeframe_state      : timeframe_state_type;
 signal tfbit_mgt_ored       : std_logic;
 signal timeframe_cntr       : unsigned(31 downto 0);
 signal pmc_timeframe_val    : std_logic_vector(15 downto 0);
+signal pmc_timestamp_val    : std_logic_vector(31 downto 0);
+signal td_if_timeframe_val  : std_logic_vector(15 downto 0);
+signal td_if_timestamp_val  : std_logic_vector(31 downto 0);
 signal timeframe_start      : std_logic;
 signal counter_16bit        : unsigned(15 downto 0);
 signal counter_10bit        : unsigned(9 downto 0);
@@ -89,8 +95,14 @@ begin
 timeframe_start <= tfs_bpm_i when (DEVICE = BPM and tfs_override_i = '0') else tfbit_mgt_ored;
 
 -- timeframe count value is (1) incremented with every frame on BPM design,
--- (2) extracted from first arriving primary BPM packet on others
-timeframe_cntr_o <= std_logic_vector(timeframe_cntr) when (DEVICE = BPM and tfs_override_i = '0') else (X"0000" & pmc_timeframe_val);
+-- (2) extracted from tandem interface if DEVICE is a DISTRIBUTOR,
+-- (3) extracted from first arriving primary BPM packet on others
+timeframe_cntr_o <= std_logic_vector(timeframe_cntr) when (DEVICE = BPM and tfs_override_i = '0') else
+                       (X"0000" & td_if_timeframe_val) when DEVICE = DISTRIBUTOR else
+                       (X"0000" & pmc_timeframe_val);
+
+timestamp_value_o <= pmc_timestamp_val when DEVICE /= DISTRIBUTOR else
+                     td_if_timestamp_val;
 
 ---------------------------------------------------
 -- timeframe start bits extracted form RocketIO
@@ -122,11 +134,15 @@ begin
     if (mgtclk_i'event and mgtclk_i = '1') then
         if (mgtreset_i = '1') then
             pmc_timeframe_val  <= (others => '0');
+            td_if_timeframe_val <= (others => '0');
             timestamp_value_o <= (others => '0');
         else
             if (timeframe_state = idle) then
                 pmc_timeframe_val  <= pmc_timeframe_cntr_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
-                timestamp_value_o <= pmc_timestamp_val_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
+                pmc_timestamp_val <= pmc_timestamp_val_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
+
+                td_if_timeframe_val <= td_if_timeframe_cntr_i;
+                td_if_timestamp_val <= td_if_timestamp_val_i;
             end if;
         end if;
     end if;
