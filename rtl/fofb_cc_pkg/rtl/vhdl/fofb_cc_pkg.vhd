@@ -61,13 +61,6 @@ type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM, DISTRIBUTOR);
 constant BPMFirmwareVersion : std_logic_vector(31 downto 0) := FPGAFirmwareVersion;
 ------------------------------------------------------------------------------
 
---------------------------- DCC packet fields -----------------------------
-constant def_PacketTimeframeCntr16MSB : natural := 127;
-constant def_PacketTimeframeCntr16LSB : natural := 112;
-
-constant def_PacketTimeStampMSB : natural := 31;
-constant def_PacketTimeStampLSB : natural := 0;
-
 ---------------------------------------------------
 -- Default parameter values
 ---------------------------------------------------
@@ -96,6 +89,16 @@ constant SourceType             : std_logic_vector(2 downto 0) := "000";
 -- Adjusting this parameter reduces logic
 constant NodeNum                : integer := 512;   -- # of nodes
 constant NodeW                  : integer := 9;     -- log2(NodeNum)
+
+--------------------------- DCC packet fields -----------------------------
+constant def_PacketTimeframeCntr16MSB : natural := 127;
+constant def_PacketTimeframeCntr16LSB : natural := 112;
+
+constant def_PacketIDMSB : natural := NodeW+95;
+constant def_PacketIDLSB : natural := 96;
+
+constant def_PacketTimeStampMSB : natural := 31;
+constant def_PacketTimeStampLSB : natural := 0;
 
 ----------------------------------------------------------------------
 -- ADDRESS SPACE
