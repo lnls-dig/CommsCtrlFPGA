@@ -183,11 +183,13 @@ signal link_partners        : std_logic_2d_10(LANE_COUNT-1 downto 0);
 signal timeframe_dly        : std_logic_vector(15 downto 0);
 -- channel status signals
 signal linkup               : std_logic_vector(2*LANE_COUNT-1 downto 0);
-signal rx_linkup            : std_logic_vector(LANE_COUNT-1+EXTRA_LANE downto 0);
-signal tx_linkup            : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rx_linkup            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal tx_linkup            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 -- system reset
-signal rx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
-signal tx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rx_fifo_rst          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rx_fifo_rst_n        : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal tx_fifo_rst          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal tx_fifo_rst_n        : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 -- arbmux module connections
 signal arbmux_dout          : std_logic_vector((32*PacketSize-1) downto 0);
 signal arbmux_dout_rdy      : std_logic;
@@ -207,8 +209,8 @@ signal bpm_cc_ypos          : std_logic_2d_32(BPMS-1 downto 0);
 -- status info
 signal rx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
 signal tx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
-signal tx_fsm_busy          : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rx_fsm_busy          : std_logic_vector(LANE_COUNT-1 downto 0);
+signal tx_fsm_busy          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rx_fsm_busy          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 signal harderror_cnt        : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal softerror_cnt        : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal frameerror_cnt       : std_logic_2d_16(LANE_COUNT-1 downto 0);
@@ -409,8 +411,8 @@ port map (
     frameerror_cnt_o        => frameerror_cnt,
     fofb_err_clear          => fofb_err_clear,
 
-    tx_sm_busy_o            => tx_fsm_busy,
-    rx_sm_busy_o            => rx_fsm_busy,
+    tx_sm_busy_o            => tx_fsm_busy(LANE_COUNT-1 downto 0),
+    rx_sm_busy_o            => rx_fsm_busy(LANE_COUNT-1 downto 0),
 
     tfs_bit_o               => ext_timeframe_start,
     link_partner_o          => link_partners,
@@ -433,7 +435,7 @@ port map (
 -- fifo reset module. fifos are flushed at the end
 -- of each time rame.
 ----------------------------------------------
-fifo_reset: for N in 0 to (LANE_COUNT - 1) generate
+fifo_reset: for N in 0 to (LANE_COUNT + EXTRA_LANE - 1) generate
 fofb_cc_fifo_rst : entity work.fofb_cc_fifo_rst
 port map(
     mgtclk_i                => userclk,
@@ -447,6 +449,9 @@ port map(
     rxfifo_reset_o          => rx_fifo_rst(N)
 );
 end generate;
+
+tx_fifo_rst_n <= not tx_fifo_rst;
+rx_fifo_rst_n <= not rx_fifo_rst;
 
 ----------------------------------------------
 -- asymetrical rx fifo generation for each mgt channel
@@ -492,17 +497,23 @@ port map(
     timestamp_val_o              => td_if_timestamp_val,
 
     td_if_clk_i                  => userclk,
-    td_if_rst_n_i                => sysreset_n,
+    td_if_rst_n_i                => rx_fifo_rst_n(LANE_COUNT+EXTRA_LANE-1),
     td_if_data_o                 => ext_cc_dout,
     td_if_valid_o                => ext_cc_dout_val,
     td_if_en_i                   => ext_cc_dat_rd_en,
     td_if_empty_o                => ext_cc_dat_empty
 );
 
--- generate rx_linkup for EXTRA_LANE. As they come
+-- generate linkup for EXTRA_LANE. As they come
 -- from other DCC just say they are active and use the
 -- "valid" signal to qualify the data.
 rx_linkup(LANE_COUNT+EXTRA_LANE-1) <= '1';
+tx_linkup(LANE_COUNT+EXTRA_LANE-1) <= '1';
+
+-- generate linkup for EXTRA_LANE. As they come
+-- from other DCC just say they are not busy.
+tx_fsm_busy(LANE_COUNT+EXTRA_LANE-1) <= '0';
+rx_fsm_busy(LANE_COUNT+EXTRA_LANE-1) <= '0';
 
 rxf_dout(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dout;
 rxf_empty(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dat_empty;
