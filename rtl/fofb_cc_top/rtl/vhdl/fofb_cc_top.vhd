@@ -516,7 +516,10 @@ tx_fsm_busy(LANE_COUNT+EXTRA_LANE-1) <= '0';
 rx_fsm_busy(LANE_COUNT+EXTRA_LANE-1) <= '0';
 
 rxf_dout(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dout;
-rxf_empty(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dat_empty;
+-- we can't use empty, as our flag might be pessimistic, so
+-- the flag will be asserted before the data is actually
+-- valid
+rxf_empty(LANE_COUNT+EXTRA_LANE-1) <= not ext_cc_dout_val;
 
 -- ack receiving current word. Fetch next one if not empty.
 -- FWFT enable
