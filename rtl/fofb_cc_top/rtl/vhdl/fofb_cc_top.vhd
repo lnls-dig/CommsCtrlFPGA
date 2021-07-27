@@ -197,7 +197,7 @@ signal mgt_loopback         : std_logic_vector(2*LANE_COUNT-1 downto 0);
 -- time frame start signals
 signal int_timeframe_start  : std_logic := '0';
 signal ext_timeframe_start  : std_logic_vector(LANE_COUNT-1 downto 0);
-signal td_if_timeframe_start : std_logic := '0';
+signal td_if_timeframe_start : std_logic := '1';
 signal timeframe_start      : std_logic := '0';
 signal timeframe_end        : std_logic;
 signal timeframe_valid      : std_logic;
@@ -477,9 +477,9 @@ WITH_EXTRA_LANES_FIFO : if (USE_EXT_CC_IF = true) generate
 fofb_cc_td_if : entity work.fofb_cc_td_if
 generic map (
     FIFO_DATA_WIDTH              => 32*PacketSize,
-    FIFO_SIZE                    => 8,
+    FIFO_SIZE                    => 16,
     FIFO_ALMOST_EMPTY_THRESHOLD  => 2,
-    FIFO_ALMOST_FULL_THRESHOLD   => 6
+    FIFO_ALMOST_FULL_THRESHOLD   => 14
 )
 port map(
     ext_cc_clk_i                 => ext_cc_clk_i,
@@ -721,6 +721,7 @@ end generate; -- USE_EXT_CC_IF = false
 fofb_cc_frame_cntrl : entity work.fofb_cc_frame_cntrl
 generic map (
     DEVICE                  => DEVICE,
+    USE_EXT_CC_IF           => USE_EXT_CC_IF,
     LaneCount               => LANE_COUNT
 )
 port map(

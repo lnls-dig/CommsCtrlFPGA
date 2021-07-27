@@ -25,6 +25,7 @@ use work.fofb_cc_pkg.all;   -- DLS FOFB package
 entity fofb_cc_frame_cntrl is
     generic (
         DEVICE              : device_t := BPM;
+        USE_EXT_CC_IF       : boolean := false;
         LaneCount           : natural := 4
     );
     port (
@@ -33,7 +34,7 @@ entity fofb_cc_frame_cntrl is
         -- Time frame start input
         tfs_bpm_i           : in  std_logic;
         tfs_pmc_i           : in  std_logic_vector(LaneCount-1 downto 0);
-        tfs_td_if_i         : in  std_logic;
+        tfs_td_if_i         : in  std_logic := '1';
         tfs_override_i      : in  std_logic := '0';
         -- Time frame control outputs
         timeframe_len_i     : in  std_logic_vector(15 downto 0);
@@ -44,8 +45,8 @@ entity fofb_cc_frame_cntrl is
         pmc_timeframe_cntr_i: in  std_logic_2d_16(LaneCount-1 downto 0);
         pmc_timestamp_val_i : in  std_logic_2d_32(LaneCount-1 downto 0);
         -- Timeframe number from TD_IF
-        td_if_timeframe_cntr_i : in std_logic_vector(15 downto 0);
-        td_if_timestamp_val_i : in std_logic_vector(31 downto 0);
+        td_if_timeframe_cntr_i : in std_logic_vector(15 downto 0) := (others => '0');
+        td_if_timestamp_val_i : in std_logic_vector(31 downto 0) := (others => '0');
         -- System timeframe count and timestamp information
         timeframe_cntr_o    : out std_logic_vector(31 downto 0);
         timestamp_value_o   : out std_logic_vector(31 downto 0)
@@ -98,11 +99,11 @@ timeframe_start <= tfs_bpm_i when (DEVICE = BPM and tfs_override_i = '0') else t
 -- (2) extracted from tandem interface if DEVICE is a DISTRIBUTOR,
 -- (3) extracted from first arriving primary BPM packet on others
 timeframe_cntr_o <= std_logic_vector(timeframe_cntr) when (DEVICE = BPM and tfs_override_i = '0') else
-                       (X"0000" & td_if_timeframe_val) when DEVICE = DISTRIBUTOR else
+                       (X"0000" & td_if_timeframe_val) when (DEVICE = DISTRIBUTOR and USE_EXT_CC_IF) else
                        (X"0000" & pmc_timeframe_val);
 
-timestamp_value_o <= pmc_timestamp_val when DEVICE /= DISTRIBUTOR else
-                     td_if_timestamp_val;
+timestamp_value_o <= td_if_timestamp_val when (DEVICE = DISTRIBUTOR and USE_EXT_CC_IF) else
+                     pmc_timestamp_val;
 
 ---------------------------------------------------
 -- timeframe start bits extracted form RocketIO
@@ -117,7 +118,9 @@ begin
         tmp := tmp or tfs_pmc_i(N);
     end loop;
 
-    tmp := tmp or tfs_td_if_i;
+    if DEVICE = DISTRIBUTOR and USE_EXT_CC_IF then
+        tmp := tmp or tfs_td_if_i;
+    end if;
 
     tfbit_mgt_ored <= tmp;
 end process;
