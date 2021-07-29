@@ -55,11 +55,20 @@ type std_logic_2d_64    is array (natural range <>) of std_logic_vector(63 downt
 type std_logic_2d_128   is array (natural range <>) of std_logic_vector(127 downto 0);
 type sys_state_type is (disabled, idle, enabled);
 
+-- Funtions for padding an array
+function pad_array(x: std_logic_2d_8; len_pad: natural; fill: std_logic) return std_logic_2d_8;
+function pad_array(x: std_logic_2d_10; len_pad: natural; fill: std_logic) return std_logic_2d_10;
+function pad_array(x: std_logic_2d_16; len_pad: natural; fill: std_logic) return std_logic_2d_16;
+function pad_array(x: std_logic_vector; len_pad: natural; fill: std_logic) return std_logic_vector;
+
 type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM, DISTRIBUTOR);
 
 --------------------------- BPM Firmware Version -----------------------------
 constant BPMFirmwareVersion : std_logic_vector(31 downto 0) := FPGAFirmwareVersion;
 ------------------------------------------------------------------------------
+
+--------------------------- Maximum number of lanes -----------------------------
+constant MaxLaneCount           : natural := 8;
 
 ---------------------------------------------------
 -- Default parameter values
@@ -377,5 +386,65 @@ begin
               vector_AND(y(mid-1 downto 0));
   end if;
 end vector_AND;
+
+------------------------------------------------------------------------------
+-- Funtions for padding an array
+------------------------------------------------------------------------------
+
+function pad_array(x: std_logic_vector; len_pad: natural; fill: std_logic)
+  return std_logic_vector
+is
+  variable tmp : std_logic_vector(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := fill;
+  end loop;
+
+  return tmp;
+end pad_array;
+
+function pad_array(x: std_logic_2d_8; len_pad: natural; fill: std_logic)
+  return std_logic_2d_8
+is
+  variable tmp : std_logic_2d_8(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := (others => fill);
+  end loop;
+
+  return tmp;
+end pad_array;
+
+function pad_array(x: std_logic_2d_10; len_pad: natural; fill: std_logic)
+  return std_logic_2d_10
+is
+  variable tmp : std_logic_2d_10(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := (others => fill);
+  end loop;
+
+  return tmp;
+end pad_array;
+
+function pad_array(x: std_logic_2d_16; len_pad: natural; fill: std_logic)
+  return std_logic_2d_16
+is
+  variable tmp : std_logic_2d_16(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := (others => fill);
+  end loop;
+
+  return tmp;
+end pad_array;
 
 end fofb_cc_pkg;

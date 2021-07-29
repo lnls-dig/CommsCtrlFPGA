@@ -195,7 +195,9 @@ signal arbmux_dout          : std_logic_vector((32*PacketSize-1) downto 0);
 signal arbmux_dout_rdy      : std_logic;
 -- configuration signals
 signal mgt_powerdown        : std_logic_vector(LANE_COUNT-1 downto 0);
+signal mgt_powerdown_pad    : std_logic_vector(MaxLaneCount-1 downto 0);
 signal mgt_loopback         : std_logic_vector(2*LANE_COUNT-1 downto 0);
+signal mgt_loopback_pad     : std_logic_vector(2*MaxLaneCount-1 downto 0);
 -- time frame start signals
 signal int_timeframe_start  : std_logic := '0';
 signal ext_timeframe_start  : std_logic_vector(LANE_COUNT-1 downto 0);
@@ -248,6 +250,7 @@ signal fofb_err_clear       : std_logic;
 signal initclk              : std_logic;
 signal initreset            : std_logic;
 signal rxpolarity           : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rxpolarity_pad       : std_logic_vector(MaxLaneCount-1 downto 0);
 signal fai_psel_val         : std_logic_vector(31 downto 0);
 signal fofb_pos_datsel      : std_logic_vector(3 downto 0);
 
@@ -430,6 +433,10 @@ port map (
     rx_dat_o                => rxf_din,
     rx_dat_val_o            => rxf_wr_en
 );
+
+mgt_powerdown <= mgt_powerdown_pad(LANE_COUNT-1 downto 0);
+mgt_loopback  <= mgt_loopback_pad(2*LANE_COUNT-1 downto 0);
+rxpolarity    <= rxpolarity_pad(LANE_COUNT-1 downto 0);
 
 ----------------------------------------------
 -- fifo reset module. fifos are flushed at the end
@@ -627,7 +634,6 @@ end generate;
 ----------------------------------------------
 -- Configuration interface module
 ----------------------------------------------
--- FIXME FIXME FIXME, using just 4 LANES!
 fofb_cc_cfg_if : entity work.fofb_cc_cfg_if
 generic map (
     ID                      => ID,
@@ -643,25 +649,25 @@ port map(
     fai_cfg_we_o            => fai_cfg_we_o,
     bpmid_o                 => bpmid,
     timeframe_len_o         => timeframelen,
-    powerdown_o             => mgt_powerdown(3 downto 0),
-    loopback_o              => mgt_loopback(7 downto 0),
+    powerdown_o             => mgt_powerdown_pad,
+    loopback_o              => mgt_loopback_pad,
     timeframe_dly_o         => timeframe_dly,
-    rxpolarity_o            => rxpolarity(3 downto 0),
+    rxpolarity_o            => rxpolarity_pad,
     fai_psel_val_o          => fai_psel_val,
     fofb_dat_sel_o          => fofb_pos_datsel,
     pmc_heart_beat_i        => X"00000000",
-    link_partners_i         => link_partners(3 downto 0),
-    link_up_i               => link_up_i(7 downto 0),
+    link_partners_i         => pad_array(link_partners, 8-LANE_COUNT, '0'),
+    link_up_i               => pad_array(link_up_i, 2*(8-LANE_COUNT), '0'),
     timeframe_cnt_i         => timeframe_count(15 downto 0),
-    harderror_cnt_i         => harderror_cnt(3 downto 0),
-    softerror_cnt_i         => softerror_cnt(3 downto 0),
-    frameerror_cnt_i        => frameerror_cnt(3 downto 0),
-    rxpck_cnt_i             => rxpck_count(3 downto 0),
-    txpck_cnt_i             => txpck_count(3 downto 0),
+    harderror_cnt_i         => pad_array(harderror_cnt, 8-LANE_COUNT, '0'),
+    softerror_cnt_i         => pad_array(softerror_cnt, 8-LANE_COUNT, '0'),
+    frameerror_cnt_i        => pad_array(frameerror_cnt, 8-LANE_COUNT, '0'),
+    rxpck_cnt_i             => pad_array(rxpck_count, 8-LANE_COUNT, '0'),
+    txpck_cnt_i             => pad_array(txpck_count, 8-LANE_COUNT, '0'),
     bpmcount_i              => bpm_count,
     fodprocess_time_i       => fodprocess_time,
-    rx_max_data_count_i     => rx_max_data_count(3 downto 0),
-    tx_max_data_count_i     => tx_max_data_count(3 downto 0),
+    rx_max_data_count_i     => pad_array(rx_max_data_count, 8-LANE_COUNT, '0'),
+    tx_max_data_count_i     => pad_array(tx_max_data_count, 8-LANE_COUNT, '0'),
     coeff_x_addr_i          => coeff_x_addr_i,
     coeff_x_dat_o           => coeff_x_dat_o,
     coeff_y_addr_i          => coeff_y_addr_i,
