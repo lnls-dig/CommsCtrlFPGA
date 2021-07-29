@@ -156,8 +156,36 @@ constant cc_cmd_powerdown_rdback    : unsigned(7 downto 0)  := X"1F";
 constant cc_cmd_loopback_rdback     : unsigned(7 downto 0)  := X"20";
 constant cc_cmd_faival_rdback       : unsigned(7 downto 0)  := X"21";
 constant cc_cmd_feature_rdback      : unsigned(7 downto 0)  := X"22";
-constant cc_cmd_rx_maxcount         : unsigned(7 downto 0)  := X"23";
-constant cc_cmd_tx_maxcount         : unsigned(7 downto 0)  := X"24";
+constant cc_cmd_rx_maxcount_1       : unsigned(7 downto 0)  := X"23";
+constant cc_cmd_tx_maxcount_1       : unsigned(7 downto 0)  := X"24";
+
+-- New configuration registers for up to 8 links
+constant cc_cmd_link_partner_5      : unsigned(7 downto 0)  := X"25";
+constant cc_cmd_link_partner_6      : unsigned(7 downto 0)  := X"26";
+constant cc_cmd_link_partner_7      : unsigned(7 downto 0)  := X"27";
+constant cc_cmd_link_partner_8      : unsigned(7 downto 0)  := X"28";
+constant cc_cmd_hard_err_cnt_5      : unsigned(7 downto 0)  := X"29";
+constant cc_cmd_hard_err_cnt_6      : unsigned(7 downto 0)  := X"2A";
+constant cc_cmd_hard_err_cnt_7      : unsigned(7 downto 0)  := X"2B";
+constant cc_cmd_hard_err_cnt_8      : unsigned(7 downto 0)  := X"2C";
+constant cc_cmd_soft_err_cnt_5      : unsigned(7 downto 0)  := X"2D";
+constant cc_cmd_soft_err_cnt_6      : unsigned(7 downto 0)  := X"2E";
+constant cc_cmd_soft_err_cnt_7      : unsigned(7 downto 0)  := X"2F";
+constant cc_cmd_soft_err_cnt_8      : unsigned(7 downto 0)  := X"30";
+constant cc_cmd_frame_err_cnt_5     : unsigned(7 downto 0)  := X"31";
+constant cc_cmd_frame_err_cnt_6     : unsigned(7 downto 0)  := X"32";
+constant cc_cmd_frame_err_cnt_7     : unsigned(7 downto 0)  := X"33";
+constant cc_cmd_frame_err_cnt_8     : unsigned(7 downto 0)  := X"34";
+constant cc_cmd_rx_pck_cnt_5        : unsigned(7 downto 0)  := X"35";
+constant cc_cmd_rx_pck_cnt_6        : unsigned(7 downto 0)  := X"36";
+constant cc_cmd_rx_pck_cnt_7        : unsigned(7 downto 0)  := X"37";
+constant cc_cmd_rx_pck_cnt_8        : unsigned(7 downto 0)  := X"38";
+constant cc_cmd_tx_pck_cnt_5        : unsigned(7 downto 0)  := X"39";
+constant cc_cmd_tx_pck_cnt_6        : unsigned(7 downto 0)  := X"3A";
+constant cc_cmd_tx_pck_cnt_7        : unsigned(7 downto 0)  := X"3B";
+constant cc_cmd_tx_pck_cnt_8        : unsigned(7 downto 0)  := X"3C";
+constant cc_cmd_rx_maxcount_2       : unsigned(7 downto 0)  := X"3D";
+constant cc_cmd_tx_maxcount_2       : unsigned(7 downto 0)  := X"3E";
 
 --
 -- Global component declarations

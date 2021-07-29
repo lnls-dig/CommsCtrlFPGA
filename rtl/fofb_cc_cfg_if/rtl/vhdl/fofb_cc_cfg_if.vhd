@@ -37,26 +37,26 @@ entity fofb_cc_cfg_if is
         -- Configuration data read from config bram
         bpmid_o                 : out std_logic_vector(NodeW-1 downto 0);
         timeframe_len_o         : out std_logic_vector(15 downto 0);
-        powerdown_o             : out std_logic_vector(3 downto 0);
-        loopback_o              : out std_logic_vector(7 downto 0);
+        powerdown_o             : out std_logic_vector(7 downto 0);
+        loopback_o              : out std_logic_vector(15 downto 0);
         timeframe_dly_o         : out std_logic_vector(15 downto 0);
-        rxpolarity_o            : out std_logic_vector(3 downto 0);
+        rxpolarity_o            : out std_logic_vector(7 downto 0);
         fai_psel_val_o          : out std_logic_vector(31 downto 0);
         fofb_dat_sel_o          : out std_logic_vector(3 downto 0);
         -- Configuration data written to config bram
         pmc_heart_beat_i        : in  std_logic_vector(31 downto 0);
-        link_partners_i         : in std_logic_2d_10(3 downto 0);
-        link_up_i               : in std_logic_vector(7 downto 0);
+        link_partners_i         : in std_logic_2d_10(7 downto 0);
+        link_up_i               : in std_logic_vector(15 downto 0);
         timeframe_cnt_i         : in std_logic_vector(15 downto 0);
-        harderror_cnt_i         : in std_logic_2d_16(3 downto 0);
-        softerror_cnt_i         : in std_logic_2d_16(3 downto 0);
-        frameerror_cnt_i        : in std_logic_2d_16(3 downto 0);
-        rxpck_cnt_i             : in std_logic_2d_16(3 downto 0);
-        txpck_cnt_i             : in std_logic_2d_16(3 downto 0);
+        harderror_cnt_i         : in std_logic_2d_16(7 downto 0);
+        softerror_cnt_i         : in std_logic_2d_16(7 downto 0);
+        frameerror_cnt_i        : in std_logic_2d_16(7 downto 0);
+        rxpck_cnt_i             : in std_logic_2d_16(7 downto 0);
+        txpck_cnt_i             : in std_logic_2d_16(7 downto 0);
         bpmcount_i              : in std_logic_vector(7 downto 0);
         fodprocess_time_i       : in std_logic_vector(15 downto 0);
-        rx_max_data_count_i     : in std_logic_2d_8(3 downto 0);
-        tx_max_data_count_i     : in std_logic_2d_8(3 downto 0);
+        rx_max_data_count_i     : in std_logic_2d_8(7 downto 0);
+        tx_max_data_count_i     : in std_logic_2d_8(7 downto 0);
         -- feedback algorithm interface
         coeff_x_addr_i          : in  std_logic_vector(7 downto 0);
         coeff_x_dat_o           : out std_logic_vector(31 downto 0);
@@ -156,7 +156,7 @@ begin
                         else
                             cfg_addr <= cfg_addr + 1;
                         end if;
-                    end if; 
+                    end if;
 
                 when others =>
             end case;
@@ -180,7 +180,7 @@ if (mgtclk_i'event and mgtclk_i='1') then
         coef_y_wr       <= '0';
         golden_x_orb_o  <= (others => '0');
         golden_y_orb_o  <= (others => '0');
-        rxpolarity_o    <= "0000";
+        rxpolarity_o    <= (others => '0');
         fai_psel_val_o  <= X"FEFEFEFE";
         fofb_dat_sel_o  <= "0000";
     else
@@ -193,19 +193,19 @@ if (mgtclk_i'event and mgtclk_i='1') then
                 end if;
                 -- Time frame lenght in terms of clocks
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_time_frame_len) then
-                    timeframe_len_o <=  fai_cfg_di_i(15 downto 0);
+                    timeframe_len_o <=  fai_cfg_di_i(timeframe_len_o'range);
                 end if;
                 -- MGT Powerdown
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_mgt_powerdown) then
-                    powerdown_o <= fai_cfg_di_i(3 downto 0);
+                    powerdown_o <= fai_cfg_di_i(powerdown_o'range);
                 end if;
                 -- MGT Loopback
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_mgt_loopback) then
-                    loopback_o <= fai_cfg_di_i(7 downto 0);
+                    loopback_o <= fai_cfg_di_i(loopback_o'range);
                 end if;
                 -- Timeframe start delay in terms of clocks
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_time_frame_dly) then
-                    timeframe_dly_o <=  fai_cfg_di_i(15 downto 0);
+                    timeframe_dly_o <=  fai_cfg_di_i(timeframe_dly_o'range);
                 end if;
                 -- Golden orbit -x
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_golden_orb_x) then
@@ -217,7 +217,7 @@ if (mgtclk_i'event and mgtclk_i='1') then
                 end if;
                 -- MGT RX Polarity
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_rxpolarity) then
-                    rxpolarity_o <= fai_cfg_di_i(3 downto 0);
+                    rxpolarity_o <= fai_cfg_di_i(rxpolarity_o'range);
                 end if;
                 -- FAI data stream payload selection
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_payloadsel) then
@@ -225,7 +225,7 @@ if (mgtclk_i'event and mgtclk_i='1') then
                 end if;
                 -- FOFB data injection select
                 if (cfg_addr_prev2(7 downto 0) = cc_cmd_fofbdatasel) then
-                    fofb_dat_sel_o <= fai_cfg_di_i(3 downto 0);
+                    fofb_dat_sel_o <= fai_cfg_di_i(fofb_dat_sel_o'range);
                 end if;
             end if;
         end if;
@@ -269,50 +269,86 @@ begin
                     when cc_cmd_firmware_ver    =>
                         fai_cfg_do_o <= BPMFirmwareVersion;
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_sys_status  => 
+                    when cc_cmd_sys_status  =>
                         fai_cfg_do_o <= pmc_heart_beat_i;
                         fai_cfg_we_o <= '1';
                     when cc_cmd_link_partner_1  =>
                         fai_cfg_do_o <= zeros(22) & link_partners_i(0);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_link_partner_2  => 
+                    when cc_cmd_link_partner_2  =>
                         fai_cfg_do_o <= zeros(22) & link_partners_i(1);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_link_partner_3  => 
+                    when cc_cmd_link_partner_3  =>
                         fai_cfg_do_o <= zeros(22) & link_partners_i(2);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_link_partner_4  => 
+                    when cc_cmd_link_partner_4  =>
                         fai_cfg_do_o <= zeros(22) & link_partners_i(3);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_link_up => 
-                        fai_cfg_do_o <= zeros(24) & link_up_i;
+                    when cc_cmd_link_partner_5  =>
+                        fai_cfg_do_o <= zeros(22) & link_partners_i(4);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_time_frame_count        => 
+                    when cc_cmd_link_partner_6  =>
+                        fai_cfg_do_o <= zeros(22) & link_partners_i(5);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_link_partner_7  =>
+                        fai_cfg_do_o <= zeros(22) & link_partners_i(6);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_link_partner_8  =>
+                        fai_cfg_do_o <= zeros(22) & link_partners_i(7);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_link_up =>
+                        fai_cfg_do_o <= zeros(16) & link_up_i;
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_time_frame_count        =>
                         fai_cfg_do_o <= zeros(16) & timeframe_cnt_i;
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_hard_err_cnt_1  => 
+                    when cc_cmd_hard_err_cnt_1  =>
                         fai_cfg_do_o <= zeros(16) & harderror_cnt_i(0);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_hard_err_cnt_2  => 
+                    when cc_cmd_hard_err_cnt_2  =>
                         fai_cfg_do_o <= zeros(16) & harderror_cnt_i(1);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_hard_err_cnt_3  => 
+                    when cc_cmd_hard_err_cnt_3  =>
                         fai_cfg_do_o <= zeros(16) & harderror_cnt_i(2);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_hard_err_cnt_4  => 
+                    when cc_cmd_hard_err_cnt_4  =>
                         fai_cfg_do_o <= zeros(16) & harderror_cnt_i(3);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_soft_err_cnt_1  => 
+                    when cc_cmd_hard_err_cnt_5  =>
+                        fai_cfg_do_o <= zeros(16) & harderror_cnt_i(4);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_hard_err_cnt_6  =>
+                        fai_cfg_do_o <= zeros(16) & harderror_cnt_i(5);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_hard_err_cnt_7  =>
+                        fai_cfg_do_o <= zeros(16) & harderror_cnt_i(6);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_hard_err_cnt_8  =>
+                        fai_cfg_do_o <= zeros(16) & harderror_cnt_i(7);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_soft_err_cnt_1  =>
                         fai_cfg_do_o <= zeros(16) & softerror_cnt_i(0);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_soft_err_cnt_2  => 
+                    when cc_cmd_soft_err_cnt_2  =>
                         fai_cfg_do_o <= zeros(16) & softerror_cnt_i(1);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_soft_err_cnt_3  => 
+                    when cc_cmd_soft_err_cnt_3  =>
                         fai_cfg_do_o <= zeros(16) & softerror_cnt_i(2);
                         fai_cfg_we_o <= '1';
                     when cc_cmd_soft_err_cnt_4  =>
                         fai_cfg_do_o <= zeros(16) & softerror_cnt_i(3);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_soft_err_cnt_5  =>
+                        fai_cfg_do_o <= zeros(16) & softerror_cnt_i(4);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_soft_err_cnt_6  =>
+                        fai_cfg_do_o <= zeros(16) & softerror_cnt_i(5);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_soft_err_cnt_7  =>
+                        fai_cfg_do_o <= zeros(16) & softerror_cnt_i(6);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_soft_err_cnt_8  =>
+                        fai_cfg_do_o <= zeros(16) & softerror_cnt_i(7);
                         fai_cfg_we_o <= '1';
                     when cc_cmd_frame_err_cnt_1 =>
                         fai_cfg_do_o <= zeros(16) & frameerror_cnt_i(0);
@@ -326,6 +362,18 @@ begin
                     when cc_cmd_frame_err_cnt_4 =>
                         fai_cfg_do_o <= zeros(16) & frameerror_cnt_i(3);
                         fai_cfg_we_o <= '1';
+                    when cc_cmd_frame_err_cnt_5 =>
+                        fai_cfg_do_o <= zeros(16) & frameerror_cnt_i(4);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_frame_err_cnt_6 =>
+                        fai_cfg_do_o <= zeros(16) & frameerror_cnt_i(5);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_frame_err_cnt_7 =>
+                        fai_cfg_do_o <= zeros(16) & frameerror_cnt_i(6);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_frame_err_cnt_8 =>
+                        fai_cfg_do_o <= zeros(16) & frameerror_cnt_i(7);
+                        fai_cfg_we_o <= '1';
                     when cc_cmd_rx_pck_cnt_1    =>
                         fai_cfg_do_o <= zeros(16) & rxpck_cnt_i(0);
                         fai_cfg_we_o <= '1';
@@ -338,6 +386,18 @@ begin
                     when cc_cmd_rx_pck_cnt_4    =>
                         fai_cfg_do_o <= zeros(16) & rxpck_cnt_i(3);
                         fai_cfg_we_o <= '1';
+                    when cc_cmd_rx_pck_cnt_5    =>
+                        fai_cfg_do_o <= zeros(16) & rxpck_cnt_i(4);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_rx_pck_cnt_6    =>
+                        fai_cfg_do_o <= zeros(16) & rxpck_cnt_i(5);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_rx_pck_cnt_7    =>
+                        fai_cfg_do_o <= zeros(16) & rxpck_cnt_i(6);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_rx_pck_cnt_8    =>
+                        fai_cfg_do_o <= zeros(16) & rxpck_cnt_i(7);
+                        fai_cfg_we_o <= '1';
                     when cc_cmd_tx_pck_cnt_1    =>
                         fai_cfg_do_o <= zeros(16) & txpck_cnt_i(0);
                         fai_cfg_we_o <= '1';
@@ -347,8 +407,20 @@ begin
                     when cc_cmd_tx_pck_cnt_3    =>
                         fai_cfg_do_o <= zeros(16) & txpck_cnt_i(2);
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_tx_pck_cnt_4    => 
+                    when cc_cmd_tx_pck_cnt_4    =>
                         fai_cfg_do_o <= zeros(16) & txpck_cnt_i(3);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_tx_pck_cnt_5    =>
+                        fai_cfg_do_o <= zeros(16) & txpck_cnt_i(4);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_tx_pck_cnt_6    =>
+                        fai_cfg_do_o <= zeros(16) & txpck_cnt_i(5);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_tx_pck_cnt_7    =>
+                        fai_cfg_do_o <= zeros(16) & txpck_cnt_i(6);
+                        fai_cfg_we_o <= '1';
+                    when cc_cmd_tx_pck_cnt_8    =>
+                        fai_cfg_do_o <= zeros(16) & txpck_cnt_i(7);
                         fai_cfg_we_o <= '1';
                     when cc_cmd_fod_process_time    =>
                         fai_cfg_do_o <= zeros(16) & fodprocess_time_i;
@@ -356,23 +428,35 @@ begin
                     when cc_cmd_bpm_count           =>
                         fai_cfg_do_o <= zeros(24) & bpmcount_i;
                         fai_cfg_we_o <= '1';
-                    when cc_cmd_rx_maxcount =>
+                    when cc_cmd_rx_maxcount_1 =>
                         fai_cfg_do_o <= rx_max_data_count_i(3)&
                                         rx_max_data_count_i(2)&
                                         rx_max_data_count_i(1)&
                                         rx_max_data_count_i(0);
                         fai_cfg_we_o <= '1';
-                     when cc_cmd_tx_maxcount =>
+                    when cc_cmd_rx_maxcount_2 =>
+                        fai_cfg_do_o <= rx_max_data_count_i(7)&
+                                        rx_max_data_count_i(6)&
+                                        rx_max_data_count_i(5)&
+                                        rx_max_data_count_i(4);
+                        fai_cfg_we_o <= '1';
+                     when cc_cmd_tx_maxcount_1 =>
                         fai_cfg_do_o <= tx_max_data_count_i(3)&
                                         tx_max_data_count_i(2)&
                                         tx_max_data_count_i(1)&
                                         tx_max_data_count_i(0);
                         fai_cfg_we_o <= '1';
+                     when cc_cmd_tx_maxcount_2 =>
+                        fai_cfg_do_o <= tx_max_data_count_i(7)&
+                                        tx_max_data_count_i(6)&
+                                        tx_max_data_count_i(5)&
+                                        tx_max_data_count_i(4);
+                        fai_cfg_we_o <= '1';
                    when others =>
                         fai_cfg_do_o <= (others => '0');
                         fai_cfg_we_o <= '0';
                 end case;
-            else 
+            else
                     fai_cfg_do_o <= (others => '0');
                     fai_cfg_we_o <= '0';
             end if;
