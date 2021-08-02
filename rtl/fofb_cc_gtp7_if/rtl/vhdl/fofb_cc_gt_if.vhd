@@ -166,8 +166,8 @@ signal data                 : std_logic_vector(255 downto 0);
 signal trig0                : std_logic_vector(7 downto 0);
 
 attribute MARK_DEBUG           : string;
-attribute MARK_DEBUG of rxdata : signal is "TRUE"
-attribute MARK_DEBUG of txdata : signal is "TRUE"
+attribute MARK_DEBUG of rxdata : signal is "TRUE";
+attribute MARK_DEBUG of txdata : signal is "TRUE";
 
 begin
 
