@@ -206,8 +206,8 @@ signal timeframe_start      : std_logic := '0';
 signal timeframe_end        : std_logic;
 signal timeframe_valid      : std_logic;
 -- own bpm position
-signal bpm_cc_xpos          : std_logic_2d_32(BPMS-1 downto 0);
-signal bpm_cc_ypos          : std_logic_2d_32(BPMS-1 downto 0);
+signal bpm_cc_xpos          : std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
+signal bpm_cc_ypos          : std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
 -- status info
 signal rx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
 signal tx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
