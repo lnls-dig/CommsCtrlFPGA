@@ -58,23 +58,23 @@ entity fofb_cc_gt_if is
         bpmid_i                 : in  std_logic_vector(NodeW-1 downto 0);
 
         -- mgt configuration
-        powerdown_i             : in  std_logic_vector(3 downto 0);
-        loopback_i              : in  std_logic_vector(7 downto 0);
+        powerdown_i             : in  std_logic_vector(LaneCount-1 downto 0);
+        loopback_i              : in  std_logic_vector(2*LaneCount-1 downto 0);
 
         -- status information
-        linksup_o               : out std_logic_vector(7 downto 0);
-        frameerror_cnt_o        : out std_logic_2d_16(3 downto 0);
-        softerror_cnt_o         : out std_logic_2d_16(3 downto 0);
-        harderror_cnt_o         : out std_logic_2d_16(3 downto 0);
-        txpck_cnt_o             : out std_logic_2d_16(3 downto 0);
-        rxpck_cnt_o             : out std_logic_2d_16(3 downto 0);
+        linksup_o               : out std_logic_vector(2*LaneCount-1 downto 0);
+        frameerror_cnt_o        : out std_logic_2d_16(LaneCount-1 downto 0);
+        softerror_cnt_o         : out std_logic_2d_16(LaneCount-1 downto 0);
+        harderror_cnt_o         : out std_logic_2d_16(LaneCount-1 downto 0);
+        txpck_cnt_o             : out std_logic_2d_16(LaneCount-1 downto 0);
+        rxpck_cnt_o             : out std_logic_2d_16(LaneCount-1 downto 0);
         fofb_err_clear          : in  std_logic;
 
         -- network information
-        tfs_bit_o               : out std_logic_vector(3 downto 0);
-        link_partner_o          : out std_logic_2d_10(3 downto 0);
-        pmc_timeframe_val_o     : out std_logic_2d_16(3 downto 0);
-        pmc_timestamp_val_o     : out std_logic_2d_32(3 downto 0);
+        tfs_bit_o               : out std_logic_vector(LaneCount-1 downto 0);
+        link_partner_o          : out std_logic_2d_10(LaneCount-1 downto 0);
+        pmc_timeframe_val_o     : out std_logic_2d_16(LaneCount-1 downto 0);
+        pmc_timestamp_val_o     : out std_logic_2d_32(LaneCount-1 downto 0);
 
         -- tx/rx state machine status for reset operation
         tx_sm_busy_o            : out std_logic_vector(LaneCount-1 downto 0);
@@ -94,55 +94,69 @@ end fofb_cc_gt_if;
 
 architecture rtl of fofb_cc_gt_if is
 
+type natural_array          is array (natural range <>) of natural;
+
+function gt_lane_2_gt_common(num_lanes: natural) return natural_array is
+    variable v: natural_array(num_lanes-1 downto 0);
+begin
+    for i in 0 to v'length-1 loop
+        v(i) := (i+4)/4 - 1;
+    end loop;
+    return v;
+end gt_lane_2_gt_common;
+
+constant GT_LANE_TO_COMMON_MAPPING  : natural_array(LaneCount-1 downto 0) :=
+    gt_lane_2_gt_common(LaneCount);
+constant GT_COMMON_NUM      : natural := (LaneCount-1+4)/4;
+
 signal clkin                : std_logic := '0';
-signal plllkdet             : std_logic;
-signal refclkout            : std_logic;
-signal txoutclk             : std_logic_vector(3 downto 0);
+signal plllkdet             : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal txoutclk             : std_logic_vector(LaneCount-1 downto 0);
 
-signal gtrefclk0            : std_logic;
-signal gtrefclk1            : std_logic;
-signal gteastrefclk0        : std_logic;
-signal gteastrefclk1        : std_logic;
-signal gtwestrefclk0        : std_logic;
-signal gtwestrefclk1        : std_logic;
-signal pll0refclksel        : std_logic_vector(2 downto 0);
-signal pllrst               : std_logic;
+signal gtrefclk0            : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal gtrefclk1            : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal gteastrefclk0        : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal gteastrefclk1        : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal gtwestrefclk0        : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal gtwestrefclk1        : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal pll0refclksel        : std_logic_2d_3(GT_COMMON_NUM-1 downto 0);
+signal pllrst               : std_logic_vector(GT_COMMON_NUM-1 downto 0);
 
-signal pll0clk              : std_logic;
-signal pll0refclk           : std_logic;
-signal pll1clk              : std_logic;
-signal pll1refclk           : std_logic;
+signal pll0clk              : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal pll0refclk           : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal pll1clk              : std_logic_vector(GT_COMMON_NUM-1 downto 0);
+signal pll1refclk           : std_logic_vector(GT_COMMON_NUM-1 downto 0);
 
-signal loopback             : std_logic_2d_3(3 downto 0);
-signal powerdown            : std_logic_2d_2(3 downto 0);
-signal txdata               : std_logic_2d_16(3 downto 0);
-signal rxdata               : std_logic_2d_16(3 downto 0);
-signal txcharisk            : std_logic_2d_2(3 downto 0);
-signal rxcharisk            : std_logic_2d_2(3 downto 0);
-signal rxenmcommaalign      : std_logic_vector(3 downto 0);
-signal rxenpcommaalign      : std_logic_vector(3 downto 0);
+signal loopback             : std_logic_2d_3(LaneCount-1 downto 0);
+signal powerdown            : std_logic_2d_2(LaneCount-1 downto 0);
+signal txdata               : std_logic_2d_16(LaneCount-1 downto 0);
+signal rxdata               : std_logic_2d_16(LaneCount-1 downto 0);
+signal txcharisk            : std_logic_2d_2(LaneCount-1 downto 0);
+signal rxcharisk            : std_logic_2d_2(LaneCount-1 downto 0);
+signal rxenmcommaalign      : std_logic_vector(LaneCount-1 downto 0);
+signal rxenpcommaalign      : std_logic_vector(LaneCount-1 downto 0);
 signal userclk              : std_logic;
-signal resetdone            : std_logic_vector(3 downto 0);
-signal rxresetdone          : std_logic_vector(3 downto 0);
-signal txresetdone          : std_logic_vector(3 downto 0);
-signal txkerr               : std_logic_2d_2(3 downto 0);
-signal txbuferr             : std_logic_vector(3 downto 0);
-signal tx_harderror         : std_logic_vector(3 downto 0);
-signal rxbuferr             : std_logic_vector(3 downto 0);
-signal rxrealign            : std_logic_vector(3 downto 0);
-signal rxdisperr            : std_logic_2d_2(3 downto 0);
-signal rxnotintable         : std_logic_2d_2(3 downto 0);
-signal rxreset              : std_logic_vector(3 downto 0);
-signal txreset              : std_logic_vector(3 downto 0);
-signal rxn                  : std_logic_vector(3 downto 0);
-signal rxp                  : std_logic_vector(3 downto 0);
-signal txn                  : std_logic_vector(3 downto 0);
-signal txp                  : std_logic_vector(3 downto 0);
+signal resetdone            : std_logic_vector(LaneCount-1 downto 0);
+signal rxresetdone          : std_logic_vector(LaneCount-1 downto 0);
+signal txresetdone          : std_logic_vector(LaneCount-1 downto 0);
+signal txkerr               : std_logic_2d_2(LaneCount-1 downto 0);
+signal txbuferr             : std_logic_vector(LaneCount-1 downto 0);
+signal tx_harderror         : std_logic_vector(LaneCount-1 downto 0);
+signal rxbuferr             : std_logic_vector(LaneCount-1 downto 0);
+signal rxrealign            : std_logic_vector(LaneCount-1 downto 0);
+signal rxdisperr            : std_logic_2d_2(LaneCount-1 downto 0);
+signal rxnotintable         : std_logic_2d_2(LaneCount-1 downto 0);
+signal rxreset              : std_logic_vector(LaneCount-1 downto 0);
+signal txreset              : std_logic_vector(LaneCount-1 downto 0);
+signal rxn                  : std_logic_vector(LaneCount-1 downto 0);
+signal rxp                  : std_logic_vector(LaneCount-1 downto 0);
+signal txn                  : std_logic_vector(LaneCount-1 downto 0);
+signal txp                  : std_logic_vector(LaneCount-1 downto 0);
 
 signal rx_dat_buffer        : std_logic_2d_16(LaneCount-1 downto 0);
 signal rx_dat_val_buffer    : std_logic_vector(LaneCount-1 downto 0);
-signal linksup_buffer       : std_logic_vector(7 downto 0);
-signal link_partner_buffer  : std_logic_2d_10(3 downto 0);
+signal linksup_buffer       : std_logic_vector(2*LaneCount-1 downto 0);
+signal link_partner_buffer  : std_logic_2d_10(LaneCount-1 downto 0);
 
 signal tied_to_ground       : std_logic;
 signal tied_to_vcc          : std_logic;
@@ -150,6 +164,10 @@ signal tied_to_vcc          : std_logic;
 signal control              : std_logic_vector(35 downto 0);
 signal data                 : std_logic_vector(255 downto 0);
 signal trig0                : std_logic_vector(7 downto 0);
+
+attribute MARK_DEBUG           : string;
+attribute MARK_DEBUG of rxdata : signal is "TRUE"
+attribute MARK_DEBUG of txdata : signal is "TRUE"
 
 begin
 
@@ -166,7 +184,7 @@ rx_dat_val_o <= rx_dat_val_buffer;
 linksup_o <= linksup_buffer;
 link_partner_o <= link_partner_buffer;
 
-plllkdet_o <= plllkdet;
+plllkdet_o <= vector_AND(plllkdet);
 
 userclk <= userclk_i;
 resetdone <= rxresetdone and txresetdone;
@@ -259,11 +277,11 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
             PHYSICAL_INTERFACE          => PHYSICAL_INTERFACE
         )
         port map (
-            pll0clk_in                  => pll0clk,
-            pll0refclk_in               => pll0refclk,
-            pll1clk_in                  => pll1clk,
-            pll1refclk_in               => pll1refclk,
-            rxuserrdy_in                => plllkdet,
+            pll0clk_in                  => pll0clk(GT_LANE_TO_COMMON_MAPPING(N)),
+            pll0refclk_in               => pll0refclk(GT_LANE_TO_COMMON_MAPPING(N)),
+            pll1clk_in                  => pll1clk(GT_LANE_TO_COMMON_MAPPING(N)),
+            pll1refclk_in               => pll1refclk(GT_LANE_TO_COMMON_MAPPING(N)),
+            rxuserrdy_in                => plllkdet(GT_LANE_TO_COMMON_MAPPING(N)),
             loopback_in                 => loopback(N),
             rxpd_in                     => powerdown(N),
             txpd_in                     => powerdown(N),
@@ -287,7 +305,7 @@ gtp7_if_gen : for N in 0 to (LaneCount-1) generate
             drpclk_in                   => initclk_i,
             rst_in                      => gtreset_i,
 
-            txuserrdy_in                => plllkdet,
+            txuserrdy_in                => plllkdet(GT_LANE_TO_COMMON_MAPPING(N)),
             txcharisk_in                => txcharisk(N),
             txbufstatus_out             => txbuferr(N),
             txdata_in                   => txdata(N),
@@ -304,119 +322,125 @@ end generate;
 --
 -- GTP Quad PLL instantiation
 --
-quad_pll : entity work.gtpe7_common
-    generic map
-    (
-        WRAPPER_SIM_GTRESET_SPEEDUP => "FALSE"
-    )
-    port map
-    (
-        PLL0OUTCLK_OUT        => pll0clk,
-        PLL0OUTREFCLK_OUT     => pll0refclk,
-        PLL0LOCK_OUT          => plllkdet,
-        PLL0LOCKDETCLK_IN     => '0',
-        PLL0REFCLKLOST_OUT    => open,
-        PLL0RESET_IN          => pllrst,
-        PLL0REFCLKSEL_IN      => pll0refclksel,
-        PLL0PD_IN             => '0',
-        PLL1OUTCLK_OUT        => pll1clk,
-        PLL1OUTREFCLK_OUT     => pll1refclk,
-        GTREFCLK1_IN          => gtrefclk1,
-        GTREFCLK0_IN          => gtrefclk0,
-        GTEASTREFCLK0_IN      => gteastrefclk0,
-        GTEASTREFCLK1_IN      => gteastrefclk1,
-        GTWESTREFCLK0_IN      => gtwestrefclk0,
-        GTWESTREFCLK1_IN      => gtwestrefclk1
-    );
+-- For each 4 Lanes we need another GTP common in 7-series
+gtp7_common_gen : for N in 0 to GT_COMMON_NUM-1 generate
+    quad_pll : entity work.gtpe7_common
+        generic map
+        (
+            WRAPPER_SIM_GTRESET_SPEEDUP => "FALSE"
+        )
+        port map
+        (
+            PLL0OUTCLK_OUT        => pll0clk(N),
+            PLL0OUTREFCLK_OUT     => pll0refclk(N),
+            PLL0LOCK_OUT          => plllkdet(N),
+            PLL0LOCKDETCLK_IN     => '0',
+            PLL0REFCLKLOST_OUT    => open,
+            PLL0RESET_IN          => pllrst(N),
+            PLL0REFCLKSEL_IN      => pll0refclksel(N),
+            PLL0PD_IN             => '0',
+            PLL1OUTCLK_OUT        => pll1clk(N),
+            PLL1OUTREFCLK_OUT     => pll1refclk(N),
+            GTREFCLK1_IN          => gtrefclk1(N),
+            GTREFCLK0_IN          => gtrefclk0(N),
+            GTEASTREFCLK0_IN      => gteastrefclk0(N),
+            GTEASTREFCLK1_IN      => gteastrefclk1(N),
+            GTWESTREFCLK0_IN      => gtwestrefclk0(N),
+            GTWESTREFCLK1_IN      => gtwestrefclk1(N)
+        );
 
-assert (REFCLK_INPUT = "REFCLK0" or REFCLK_INPUT = "REFCLK1" or
-    REFCLK_INPUT = "EASTREFCLK0" or REFCLK_INPUT = "EASTREFCLK1" or
-    REFCLK_INPUT = "WESTREFCLK0" or REFCLK_INPUT = "WESTREFCLK1")
-    report "[fofb_cc_gtp7_if/fofb_cc_gt_if]: Invalid REFCLK_INPUT(" & REFCLK_INPUT & ") selection." &
-        "Must be one of REFCLK0, REFCLK1, EASTREFCLK0, EASTREFCLK1, WESTREFCLK0 or WESTREFCLK1"
-    severity failure;
+    assert (REFCLK_INPUT = "REFCLK0" or REFCLK_INPUT = "REFCLK1" or
+        REFCLK_INPUT = "EASTREFCLK0" or REFCLK_INPUT = "EASTREFCLK1" or
+        REFCLK_INPUT = "WESTREFCLK0" or REFCLK_INPUT = "WESTREFCLK1")
+        report "[fofb_cc_gtp7_if/fofb_cc_gt_if]: Invalid REFCLK_INPUT(" & REFCLK_INPUT & ") selection." &
+            "Must be one of REFCLK0, REFCLK1, EASTREFCLK0, EASTREFCLK1, WESTREFCLK0 or WESTREFCLK1"
+        severity failure;
 
-refclk0_gen : if REFCLK_INPUT = "REFCLK0" generate
-    gtrefclk0     <= refclk_i;
-    gtrefclk1     <= '0';
-    gteastrefclk0 <= '0';
-    gteastrefclk1 <= '0';
-    gtwestrefclk0 <= '0';
-    gtwestrefclk1 <= '0';
-    pll0refclksel <= "001";
+    -- If more than 4 GTP are used, let the tool figure it out the correct clock
+    -- for each GTP common and just use the same refclk_i for all GTP common block
+
+    refclk0_gen : if REFCLK_INPUT = "REFCLK0" generate
+        gtrefclk0(N)     <= refclk_i;
+        gtrefclk1(N)     <= '0';
+        gteastrefclk0(N) <= '0';
+        gteastrefclk1(N) <= '0';
+        gtwestrefclk0(N) <= '0';
+        gtwestrefclk1(N) <= '0';
+        pll0refclksel(N) <= "001";
+    end generate;
+
+    refclk1_gen : if REFCLK_INPUT = "REFCLK1" generate
+        gtrefclk0(N)     <= '0';
+        gtrefclk1(N)     <= refclk_i;
+        gteastrefclk0(N) <= '0';
+        gteastrefclk1(N) <= '0';
+        gtwestrefclk0(N) <= '0';
+        gtwestrefclk1(N) <= '0';
+        pll0refclksel(N) <= "010";
+    end generate;
+
+    eastrefclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
+        gtrefclk0(N)     <= '0';
+        gtrefclk1(N)     <= '0';
+        gteastrefclk0(N) <= refclk_i;
+        gteastrefclk1(N) <= '0';
+        gtwestrefclk0(N) <= '0';
+        gtwestrefclk1(N) <= '0';
+        pll0refclksel(N) <= "011";
+    end generate;
+
+    eastrefclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
+        gtrefclk0(N)     <= '0';
+        gtrefclk1(N)     <= '0';
+        gteastrefclk0(N) <= '0';
+        gteastrefclk1(N) <= refclk_i;
+        gtwestrefclk0(N) <= '0';
+        gtwestrefclk1(N) <= '0';
+        pll0refclksel(N) <= "100";
+    end generate;
+
+    westrefclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
+        gtrefclk0(N)     <= '0';
+        gtrefclk1(N)     <= '0';
+        gteastrefclk0(N) <= '0';
+        gteastrefclk1(N) <= '0';
+        gtwestrefclk0(N) <= refclk_i;
+        gtwestrefclk1(N) <= '0';
+        pll0refclksel(N) <= "101";
+    end generate;
+
+    westrefclk1_gen : if REFCLK_INPUT = "WESTREFCLK1" generate
+        gtrefclk0(N)     <= '0';
+        gtrefclk1(N)     <= '0';
+        gteastrefclk0(N) <= '0';
+        gteastrefclk1(N) <= '0';
+        gtwestrefclk0(N) <= '0';
+        gtwestrefclk1(N) <= refclk_i;
+        pll0refclksel(N) <= "110";
+    end generate;
+
+    --
+    -- GTP Quad PLL reset logic (AR #43482)
+    --
+    quad_pll_reset : entity work.gtpe7_common_reset
+        generic map
+        (
+            STABLE_CLOCK_PERIOD   => 6
+        )
+        port map
+        (
+            STABLE_CLOCK          => initclk_i,
+            SOFT_RESET            => gtreset_i,
+            COMMON_RESET          => pllrst(N)
+       );
 end generate;
-
-refclk1_gen : if REFCLK_INPUT = "REFCLK1" generate
-    gtrefclk0     <= '0';
-    gtrefclk1     <= refclk_i;
-    gteastrefclk0 <= '0';
-    gteastrefclk1 <= '0';
-    gtwestrefclk0 <= '0';
-    gtwestrefclk1 <= '0';
-    pll0refclksel <= "010";
-end generate;
-
-eastrefclk0_gen : if REFCLK_INPUT = "EASTREFCLK0" generate
-    gtrefclk0     <= '0';
-    gtrefclk1     <= '0';
-    gteastrefclk0 <= refclk_i;
-    gteastrefclk1 <= '0';
-    gtwestrefclk0 <= '0';
-    gtwestrefclk1 <= '0';
-    pll0refclksel <= "011";
-end generate;
-
-eastrefclk1_gen : if REFCLK_INPUT = "EASTREFCLK1" generate
-    gtrefclk0     <= '0';
-    gtrefclk1     <= '0';
-    gteastrefclk0 <= '0';
-    gteastrefclk1 <= refclk_i;
-    gtwestrefclk0 <= '0';
-    gtwestrefclk1 <= '0';
-    pll0refclksel <= "100";
-end generate;
-
-westrefclk0_gen : if REFCLK_INPUT = "WESTREFCLK0" generate
-    gtrefclk0     <= '0';
-    gtrefclk1     <= '0';
-    gteastrefclk0 <= '0';
-    gteastrefclk1 <= '0';
-    gtwestrefclk0 <= refclk_i;
-    gtwestrefclk1 <= '0';
-    pll0refclksel <= "101";
-end generate;
-
-westrefclk1_gen : if REFCLK_INPUT = "WESTREFCLK1" generate
-    gtrefclk0     <= '0';
-    gtrefclk1     <= '0';
-    gteastrefclk0 <= '0';
-    gteastrefclk1 <= '0';
-    gtwestrefclk0 <= '0';
-    gtwestrefclk1 <= refclk_i;
-    pll0refclksel <= "110";
-end generate;
-
---
--- GTP Quad PLL reset logic (AR #43482)
---
-quad_pll_reset : entity work.gtpe7_common_reset
-    generic map
-    (
-        STABLE_CLOCK_PERIOD   => 6
-    )
-    port map
-    (
-        STABLE_CLOCK          => initclk_i,
-        SOFT_RESET            => gtreset_i,
-        COMMON_RESET          => pllrst
-   );
 
 --
 -- Conditional chipscope generation
 --
 CSCOPE_GEN : if (GTP7_IF_CSGEN = true) generate
 
-ila_core_inst : entity work.ila_fofb_cc_t8_d256_s8192_cap
+ila_core_inst : entity work.ila_fofb_cc_t8_d256_s4096_cap
     port map (
         clk             => userclk,
         probe0          => data,
@@ -430,82 +454,23 @@ trig0(5 downto 4)  <= rxcharisk(2);
 trig0(6)           <= gtreset_i;
 trig0(7)           <= mgtreset_i;
 
-data(15 downto 0)  <= rxdata(0);
-data(31 downto 16) <= rxdata(1);
-data(47 downto 32) <= rxdata(2);
-data(63 downto 48) <= rxdata(3);
+data(15 downto 0)    <= rxdata(0);
+data(31 downto 16)   <= rxdata(1);
+data(47 downto 32)   <= rxdata(2);
+data(63 downto 48)   <= rxdata(3);
+data(79 downto 64)   <= rxdata(4);
+data(95 downto 80)   <= rxdata(5);
+data(111 downto 96)  <= rxdata(6);
+data(127 downto 112) <= rxdata(7);
 
-data(79 downto 64)   <= txdata(0);
-data(95 downto 80)   <= txdata(1);
-data(111 downto 96)  <= txdata(2);
-data(127 downto 112) <= txdata(3);
-
-data(129 downto 128) <= rxcharisk(0);
-data(131 downto 130) <= rxcharisk(1);
-data(133 downto 132) <= rxcharisk(2);
-data(135 downto 134) <= rxcharisk(3);
-
-data(137 downto 136) <= txcharisk(0);
-data(139 downto 138) <= txcharisk(1);
-data(141 downto 140) <= txcharisk(2);
-data(143 downto 142) <= txcharisk(3);
-
-data(147 downto 144) <= resetdone;
-data(150 downto 148) <= (others => '0');
-data(151)            <= plllkdet;
-data(161 downto 152) <= link_partner_buffer(0);
-data(171 downto 162) <= link_partner_buffer(2);
-
-data(179 downto 172) <= linksup_buffer;
-
-data(180)            <= timeframe_start_i;
-data(181)            <= timeframe_valid_i;
-
-data(185 downto 182) <= rxrealign;
-data(189 downto 186) <= rxbuferr;
-
-data(190)             <= gtreset_i;
-data(191)             <= mgtreset_i;
-data(192)             <= pllrst;
-data(208 downto 193)  <= timeframe_cntr_i;
-
-data(210 downto 209)  <= rxdisperr(0);
-data(212 downto 211)  <= rxnotintable(0);
-data(213)             <= rxrealign(0);
-data(214)             <= rxenmcommaalign(0);
-data(215)             <= rxenpcommaalign(0);
-data(216)             <= rxbuferr(0);
-data(217)             <= rxresetdone(0);
-data(218)             <= rxpolarity_i(0);
-
-data(220 downto 219)  <= rxdisperr(1);
-data(222 downto 221)  <= rxnotintable(1);
-data(223)             <= rxrealign(1);
-data(224)             <= rxenmcommaalign(1);
-data(225)             <= rxenpcommaalign(1);
-data(226)             <= rxbuferr(1);
-data(227)             <= rxresetdone(1);
-data(228)             <= rxpolarity_i(1);
-
-data(230 downto 229)  <= rxdisperr(2);
-data(232 downto 231)  <= rxnotintable(2);
-data(233)             <= rxrealign(2);
-data(234)             <= rxenmcommaalign(2);
-data(235)             <= rxenpcommaalign(2);
-data(236)             <= rxbuferr(2);
-data(237)             <= rxresetdone(2);
-data(238)             <= rxpolarity_i(2);
-
-data(240 downto 239)  <= rxdisperr(3);
-data(242 downto 241)  <= rxnotintable(3);
-data(243)             <= rxrealign(3);
-data(244)             <= rxenmcommaalign(3);
-data(245)             <= rxenpcommaalign(3);
-data(246)             <= rxbuferr(3);
-data(247)             <= rxresetdone(3);
-data(248)             <= rxpolarity_i(3);
-
-data(255 downto 249)  <= (others => '0');
+data(143 downto 128) <= txdata(0);
+data(159 downto 144) <= txdata(1);
+data(175 downto 160) <= txdata(2);
+data(191 downto 176) <= txdata(3);
+data(207 downto 192) <= txdata(4);
+data(223 downto 208) <= txdata(5);
+data(239 downto 224) <= txdata(6);
+data(255 downto 240) <= txdata(7);
 
 end generate;
 

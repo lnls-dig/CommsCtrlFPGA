@@ -74,6 +74,8 @@ end fofb_cc_async_fwft_fifo;
 architecture rtl of fofb_cc_async_fwft_fifo is
 
   -- Signals
+  signal rst_n                              : std_logic;
+
   signal fwft_rd_en                         : std_logic;
   signal fwft_rd_valid                      : std_logic;
   signal fwft_rd_empty                      : std_logic;
@@ -105,7 +107,7 @@ begin
     g_almost_full_threshold                 => g_almost_full_threshold
   )
   port map(
-    rst_n_i                                 => wr_rst_n_i,
+    rst_n_i                                 => rst_n,
 
     clk_wr_i                                => wr_clk_i,
     d_i                                     => wr_data_i,
@@ -124,6 +126,8 @@ begin
     rd_empty_o                              => fwft_rd_empty,
     wr_full_o                               => wr_full_o
   );
+
+  rst_n <= wr_rst_n_i and rd_rst_n_i;
 
   -- First Word Fall Through (FWFT) implementation
   fwft_rd_en <= not(fwft_rd_empty) and (not(fwft_rd_valid) or rd_en_i);

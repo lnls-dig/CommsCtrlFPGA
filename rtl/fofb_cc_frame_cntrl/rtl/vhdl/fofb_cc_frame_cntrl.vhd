@@ -17,7 +17,7 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 library work;
-use work.fofb_cc_pkg.all;   -- DLS FOFB package 
+use work.fofb_cc_pkg.all;   -- DLS FOFB package
 
 -----------------------------------------------
 --  Entity declaration
@@ -25,6 +25,7 @@ use work.fofb_cc_pkg.all;   -- DLS FOFB package
 entity fofb_cc_frame_cntrl is
     generic (
         DEVICE              : device_t := BPM;
+        USE_EXT_CC_IF       : boolean := false;
         LaneCount           : natural := 4
     );
     port (
@@ -32,7 +33,8 @@ entity fofb_cc_frame_cntrl is
         mgtreset_i          : in  std_logic;
         -- Time frame start input
         tfs_bpm_i           : in  std_logic;
-        tfs_pmc_i           : in  std_logic_vector(3 downto 0);
+        tfs_pmc_i           : in  std_logic_vector(LaneCount-1 downto 0);
+        tfs_td_if_i         : in  std_logic := '1';
         tfs_override_i      : in  std_logic := '0';
         -- Time frame control outputs
         timeframe_len_i     : in  std_logic_vector(15 downto 0);
@@ -40,8 +42,11 @@ entity fofb_cc_frame_cntrl is
         timeframe_end_o     : out std_logic;
         timeframe_valid_o   : out std_logic;
         -- Timeframe number and timestamp information from PMC
-        pmc_timeframe_cntr_i: in  std_logic_2d_16(3 downto 0);
-        pmc_timestamp_val_i : in  std_logic_2d_32(3 downto 0);
+        pmc_timeframe_cntr_i: in  std_logic_2d_16(LaneCount-1 downto 0);
+        pmc_timestamp_val_i : in  std_logic_2d_32(LaneCount-1 downto 0);
+        -- Timeframe number from TD_IF
+        td_if_timeframe_cntr_i : in std_logic_vector(15 downto 0) := (others => '0');
+        td_if_timestamp_val_i : in std_logic_vector(31 downto 0) := (others => '0');
         -- System timeframe count and timestamp information
         timeframe_cntr_o    : out std_logic_vector(31 downto 0);
         timestamp_value_o   : out std_logic_vector(31 downto 0)
@@ -62,11 +67,25 @@ signal timeframe_state      : timeframe_state_type;
 signal tfbit_mgt_ored       : std_logic;
 signal timeframe_cntr       : unsigned(31 downto 0);
 signal pmc_timeframe_val    : std_logic_vector(15 downto 0);
+signal pmc_timestamp_val    : std_logic_vector(31 downto 0);
+signal td_if_timeframe_val  : std_logic_vector(15 downto 0);
+signal td_if_timestamp_val  : std_logic_vector(31 downto 0);
 signal timeframe_start      : std_logic;
 signal counter_16bit        : unsigned(15 downto 0);
 signal counter_10bit        : unsigned(9 downto 0);
 signal timeframe_valid      : std_logic;
 signal timeframe_valid_prev : std_logic;
+
+
+function onehot_decode(x : std_logic_vector; size : integer) return std_logic_vector is
+begin
+    for j in 0 to x'left loop
+        if x(j) /= '0' then
+            return std_logic_vector(to_unsigned(j, size));
+        end if;
+    end loop;  -- i
+    return std_logic_vector(to_unsigned(0, size));
+end onehot_decode;
 
 begin
 
@@ -77,8 +96,14 @@ begin
 timeframe_start <= tfs_bpm_i when (DEVICE = BPM and tfs_override_i = '0') else tfbit_mgt_ored;
 
 -- timeframe count value is (1) incremented with every frame on BPM design,
--- (2) extracted from first arriving primary BPM packet on others
-timeframe_cntr_o <= std_logic_vector(timeframe_cntr) when (DEVICE = BPM and tfs_override_i = '0') else (X"0000" & pmc_timeframe_val);
+-- (2) extracted from tandem interface if DEVICE is a DISTRIBUTOR,
+-- (3) extracted from first arriving primary BPM packet on others
+timeframe_cntr_o <= std_logic_vector(timeframe_cntr) when (DEVICE = BPM and tfs_override_i = '0') else
+                       (X"0000" & td_if_timeframe_val) when (DEVICE = DISTRIBUTOR and USE_EXT_CC_IF) else
+                       (X"0000" & pmc_timeframe_val);
+
+timestamp_value_o <= td_if_timestamp_val when (DEVICE = DISTRIBUTOR and USE_EXT_CC_IF) else
+                     pmc_timestamp_val;
 
 ---------------------------------------------------
 -- timeframe start bits extracted form RocketIO
@@ -92,6 +117,10 @@ begin
     OR_bits: for N IN 1 TO (LaneCount-1) loop
         tmp := tmp or tfs_pmc_i(N);
     end loop;
+
+    if DEVICE = DISTRIBUTOR and USE_EXT_CC_IF then
+        tmp := tmp or tfs_td_if_i;
+    end if;
 
     tfbit_mgt_ored <= tmp;
 end process;
@@ -108,22 +137,15 @@ begin
     if (mgtclk_i'event and mgtclk_i = '1') then
         if (mgtreset_i = '1') then
             pmc_timeframe_val  <= (others => '0');
+            td_if_timeframe_val <= (others => '0');
             timestamp_value_o <= (others => '0');
         else
             if (timeframe_state = idle) then
-                if (tfs_pmc_i(0) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(0);
-                    timestamp_value_o <= pmc_timestamp_val_i(0);
-                elsif (tfs_pmc_i(1) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(1);
-                    timestamp_value_o <= pmc_timestamp_val_i(1);
-                elsif (tfs_pmc_i(2) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(2);
-                    timestamp_value_o <= pmc_timestamp_val_i(2);
-                elsif (tfs_pmc_i(3) = '1') then
-                    pmc_timeframe_val  <= pmc_timeframe_cntr_i(3);
-                    timestamp_value_o <= pmc_timestamp_val_i(3);
-                end if;
+                pmc_timeframe_val  <= pmc_timeframe_cntr_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
+                pmc_timestamp_val <= pmc_timestamp_val_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
+
+                td_if_timeframe_val <= td_if_timeframe_cntr_i;
+                td_if_timestamp_val <= td_if_timestamp_val_i;
             end if;
         end if;
     end if;

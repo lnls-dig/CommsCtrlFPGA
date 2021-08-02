@@ -29,12 +29,17 @@ function zeros(N: integer) return std_logic_vector;
 -- Function to transpose CRC & Data
 function transpose_data(inp : std_logic_vector) return std_logic_vector;
 function tostd(inp : boolean) return std_logic;
+function tonatural(inp : boolean) return natural;
 -- Function for log2
 function log2_ceil(N : natural) return positive;
 function log2_size(N : natural) return positive;
 -- Functions for Gray encoder/decoder
 function gray_encode(x : std_logic_vector) return std_logic_vector;
 function gray_decode(x : std_logic_vector; step : natural) return std_logic_vector;
+-- Functions for ORing an std_logic_vector
+function vector_OR(x : std_logic_vector) return std_logic;
+-- Functions for ANDing an std_logic_vector
+function vector_AND(x : std_logic_vector) return std_logic;
 -- Type definitions
 -- 2D arrays
 type std_logic_2d       is array (natural range <>) of std_logic_vector(31 downto 0);
@@ -50,11 +55,20 @@ type std_logic_2d_64    is array (natural range <>) of std_logic_vector(63 downt
 type std_logic_2d_128   is array (natural range <>) of std_logic_vector(127 downto 0);
 type sys_state_type is (disabled, idle, enabled);
 
-type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM);
+-- Funtions for padding an array
+function pad_array(x: std_logic_2d_8; len_pad: natural; fill: std_logic) return std_logic_2d_8;
+function pad_array(x: std_logic_2d_10; len_pad: natural; fill: std_logic) return std_logic_2d_10;
+function pad_array(x: std_logic_2d_16; len_pad: natural; fill: std_logic) return std_logic_2d_16;
+function pad_array(x: std_logic_vector; len_pad: natural; fill: std_logic) return std_logic_vector;
+
+type device_t is (BPM, PMC, PMCEVR, PMCSFPEVR, SNIFFER, PBPM, DISTRIBUTOR);
 
 --------------------------- BPM Firmware Version -----------------------------
 constant BPMFirmwareVersion : std_logic_vector(31 downto 0) := FPGAFirmwareVersion;
 ------------------------------------------------------------------------------
+
+--------------------------- Maximum number of lanes -----------------------------
+constant MaxLaneCount           : natural := 8;
 
 ---------------------------------------------------
 -- Default parameter values
@@ -85,6 +99,16 @@ constant SourceType             : std_logic_vector(2 downto 0) := "000";
 constant NodeNum                : integer := 512;   -- # of nodes
 constant NodeW                  : integer := 9;     -- log2(NodeNum)
 
+--------------------------- DCC packet fields -----------------------------
+constant def_PacketTimeframeCntr16MSB : natural := 127;
+constant def_PacketTimeframeCntr16LSB : natural := 112;
+
+constant def_PacketIDMSB : natural := NodeW+95;
+constant def_PacketIDLSB : natural := 96;
+
+constant def_PacketTimeStampMSB : natural := 31;
+constant def_PacketTimeStampLSB : natural := 0;
+
 ----------------------------------------------------------------------
 -- ADDRESS SPACE
 ----------------------------------------------------------------------
@@ -111,38 +135,64 @@ constant cc_cmd_link_partner_1      : unsigned(7 downto 0)  := X"01";
 constant cc_cmd_link_partner_2      : unsigned(7 downto 0)  := X"02";
 constant cc_cmd_link_partner_3      : unsigned(7 downto 0)  := X"03";
 constant cc_cmd_link_partner_4      : unsigned(7 downto 0)  := X"04";
-constant cc_cmd_link_up             : unsigned(7 downto 0)  := X"05";
-constant cc_cmd_time_frame_count    : unsigned(7 downto 0)  := X"06";
-constant cc_cmd_hard_err_cnt_1      : unsigned(7 downto 0)  := X"07";
-constant cc_cmd_hard_err_cnt_2      : unsigned(7 downto 0)  := X"08";
-constant cc_cmd_hard_err_cnt_3      : unsigned(7 downto 0)  := X"09";
-constant cc_cmd_hard_err_cnt_4      : unsigned(7 downto 0)  := X"0A";
-constant cc_cmd_soft_err_cnt_1      : unsigned(7 downto 0)  := X"0B";
-constant cc_cmd_soft_err_cnt_2      : unsigned(7 downto 0)  := X"0C";
-constant cc_cmd_soft_err_cnt_3      : unsigned(7 downto 0)  := X"0D";
-constant cc_cmd_soft_err_cnt_4      : unsigned(7 downto 0)  := X"0E";
-constant cc_cmd_frame_err_cnt_1     : unsigned(7 downto 0)  := X"0F";
-constant cc_cmd_frame_err_cnt_2     : unsigned(7 downto 0)  := X"10";
-constant cc_cmd_frame_err_cnt_3     : unsigned(7 downto 0)  := X"11";
-constant cc_cmd_frame_err_cnt_4     : unsigned(7 downto 0)  := X"12";
-constant cc_cmd_rx_pck_cnt_1        : unsigned(7 downto 0)  := X"13";
-constant cc_cmd_rx_pck_cnt_2        : unsigned(7 downto 0)  := X"14";
-constant cc_cmd_rx_pck_cnt_3        : unsigned(7 downto 0)  := X"15";
-constant cc_cmd_rx_pck_cnt_4        : unsigned(7 downto 0)  := X"16";
-constant cc_cmd_tx_pck_cnt_1        : unsigned(7 downto 0)  := X"17";
-constant cc_cmd_tx_pck_cnt_2        : unsigned(7 downto 0)  := X"18";
-constant cc_cmd_tx_pck_cnt_3        : unsigned(7 downto 0)  := X"19";
-constant cc_cmd_tx_pck_cnt_4        : unsigned(7 downto 0)  := X"1A";
-constant cc_cmd_fod_process_time    : unsigned(7 downto 0)  := X"1B";
-constant cc_cmd_bpm_count           : unsigned(7 downto 0)  := X"1C";
-constant cc_cmd_bpm_id_rdback       : unsigned(7 downto 0)  := X"1D";
-constant cc_cmd_tf_length_rdback    : unsigned(7 downto 0)  := X"1E";
-constant cc_cmd_powerdown_rdback    : unsigned(7 downto 0)  := X"1F";
-constant cc_cmd_loopback_rdback     : unsigned(7 downto 0)  := X"20";
-constant cc_cmd_faival_rdback       : unsigned(7 downto 0)  := X"21";
-constant cc_cmd_feature_rdback      : unsigned(7 downto 0)  := X"22";
-constant cc_cmd_rx_maxcount         : unsigned(7 downto 0)  := X"23";
-constant cc_cmd_tx_maxcount         : unsigned(7 downto 0)  := X"24";
+constant cc_cmd_link_partner_5      : unsigned(7 downto 0)  := X"05";
+constant cc_cmd_link_partner_6      : unsigned(7 downto 0)  := X"06";
+constant cc_cmd_link_partner_7      : unsigned(7 downto 0)  := X"07";
+constant cc_cmd_link_partner_8      : unsigned(7 downto 0)  := X"08";
+constant cc_cmd_link_up             : unsigned(7 downto 0)  := X"09";
+constant cc_cmd_time_frame_count    : unsigned(7 downto 0)  := X"0A";
+constant cc_cmd_hard_err_cnt_1      : unsigned(7 downto 0)  := X"0B";
+constant cc_cmd_hard_err_cnt_2      : unsigned(7 downto 0)  := X"0C";
+constant cc_cmd_hard_err_cnt_3      : unsigned(7 downto 0)  := X"0D";
+constant cc_cmd_hard_err_cnt_4      : unsigned(7 downto 0)  := X"0E";
+constant cc_cmd_hard_err_cnt_5      : unsigned(7 downto 0)  := X"0F";
+constant cc_cmd_hard_err_cnt_6      : unsigned(7 downto 0)  := X"10";
+constant cc_cmd_hard_err_cnt_7      : unsigned(7 downto 0)  := X"11";
+constant cc_cmd_hard_err_cnt_8      : unsigned(7 downto 0)  := X"12";
+constant cc_cmd_soft_err_cnt_1      : unsigned(7 downto 0)  := X"13";
+constant cc_cmd_soft_err_cnt_2      : unsigned(7 downto 0)  := X"14";
+constant cc_cmd_soft_err_cnt_3      : unsigned(7 downto 0)  := X"15";
+constant cc_cmd_soft_err_cnt_4      : unsigned(7 downto 0)  := X"16";
+constant cc_cmd_soft_err_cnt_5      : unsigned(7 downto 0)  := X"17";
+constant cc_cmd_soft_err_cnt_6      : unsigned(7 downto 0)  := X"18";
+constant cc_cmd_soft_err_cnt_7      : unsigned(7 downto 0)  := X"19";
+constant cc_cmd_soft_err_cnt_8      : unsigned(7 downto 0)  := X"1A";
+constant cc_cmd_frame_err_cnt_1     : unsigned(7 downto 0)  := X"1B";
+constant cc_cmd_frame_err_cnt_2     : unsigned(7 downto 0)  := X"1C";
+constant cc_cmd_frame_err_cnt_3     : unsigned(7 downto 0)  := X"1D";
+constant cc_cmd_frame_err_cnt_4     : unsigned(7 downto 0)  := X"1E";
+constant cc_cmd_frame_err_cnt_5     : unsigned(7 downto 0)  := X"1F";
+constant cc_cmd_frame_err_cnt_6     : unsigned(7 downto 0)  := X"20";
+constant cc_cmd_frame_err_cnt_7     : unsigned(7 downto 0)  := X"21";
+constant cc_cmd_frame_err_cnt_8     : unsigned(7 downto 0)  := X"22";
+constant cc_cmd_rx_pck_cnt_1        : unsigned(7 downto 0)  := X"23";
+constant cc_cmd_rx_pck_cnt_2        : unsigned(7 downto 0)  := X"24";
+constant cc_cmd_rx_pck_cnt_3        : unsigned(7 downto 0)  := X"25";
+constant cc_cmd_rx_pck_cnt_4        : unsigned(7 downto 0)  := X"26";
+constant cc_cmd_rx_pck_cnt_5        : unsigned(7 downto 0)  := X"27";
+constant cc_cmd_rx_pck_cnt_6        : unsigned(7 downto 0)  := X"28";
+constant cc_cmd_rx_pck_cnt_7        : unsigned(7 downto 0)  := X"29";
+constant cc_cmd_rx_pck_cnt_8        : unsigned(7 downto 0)  := X"2A";
+constant cc_cmd_tx_pck_cnt_1        : unsigned(7 downto 0)  := X"2B";
+constant cc_cmd_tx_pck_cnt_2        : unsigned(7 downto 0)  := X"2C";
+constant cc_cmd_tx_pck_cnt_3        : unsigned(7 downto 0)  := X"2D";
+constant cc_cmd_tx_pck_cnt_4        : unsigned(7 downto 0)  := X"2E";
+constant cc_cmd_tx_pck_cnt_5        : unsigned(7 downto 0)  := X"2F";
+constant cc_cmd_tx_pck_cnt_6        : unsigned(7 downto 0)  := X"30";
+constant cc_cmd_tx_pck_cnt_7        : unsigned(7 downto 0)  := X"31";
+constant cc_cmd_tx_pck_cnt_8        : unsigned(7 downto 0)  := X"32";
+constant cc_cmd_fod_process_time    : unsigned(7 downto 0)  := X"33";
+constant cc_cmd_bpm_count           : unsigned(7 downto 0)  := X"34";
+constant cc_cmd_bpm_id_rdback       : unsigned(7 downto 0)  := X"35";
+constant cc_cmd_tf_length_rdback    : unsigned(7 downto 0)  := X"36";
+constant cc_cmd_powerdown_rdback    : unsigned(7 downto 0)  := X"37";
+constant cc_cmd_loopback_rdback     : unsigned(7 downto 0)  := X"38";
+constant cc_cmd_faival_rdback       : unsigned(7 downto 0)  := X"39";
+constant cc_cmd_feature_rdback      : unsigned(7 downto 0)  := X"3A";
+constant cc_cmd_rx_maxcount_1       : unsigned(7 downto 0)  := X"3B";
+constant cc_cmd_rx_maxcount_2       : unsigned(7 downto 0)  := X"3C";
+constant cc_cmd_tx_maxcount_1       : unsigned(7 downto 0)  := X"3D";
+constant cc_cmd_tx_maxcount_2       : unsigned(7 downto 0)  := X"3E";
 
 --
 -- Global component declarations
@@ -248,6 +298,15 @@ begin
     end if;
 end tostd;
 
+function tonatural(inp : boolean) return natural is
+begin
+    if inp then
+        return 1;
+    else
+        return 0;
+    end if;
+end tonatural;
+
 ----------------------------------------------------------------------
 -- Function for log2
 ----------------------------------------------------------------------
@@ -291,5 +350,99 @@ begin
     return gray_decode(y xor z, step+step);
   end if;
 end gray_decode;
+
+------------------------------------------------------------------------------
+-- Functions for ORing a std_logic_vector
+------------------------------------------------------------------------------
+function vector_OR(x : std_logic_vector)
+  return std_logic
+is
+  constant len : integer := x'length;
+  constant mid : integer := len / 2;
+  alias y : std_logic_vector(len-1 downto 0) is x;
+begin
+  if len = 1
+  then return y(0);
+  else return vector_OR(y(len-1 downto mid)) or
+              vector_OR(y(mid-1 downto 0));
+  end if;
+end vector_OR;
+
+------------------------------------------------------------------------------
+-- Functions for ANDing a std_logic_vector
+------------------------------------------------------------------------------
+function vector_AND(x : std_logic_vector)
+  return std_logic
+is
+  constant len : integer := x'length;
+  constant mid : integer := len / 2;
+  alias y : std_logic_vector(len-1 downto 0) is x;
+begin
+  if len = 1
+  then return y(0);
+  else return vector_AND(y(len-1 downto mid)) and
+              vector_AND(y(mid-1 downto 0));
+  end if;
+end vector_AND;
+
+------------------------------------------------------------------------------
+-- Funtions for padding an array
+------------------------------------------------------------------------------
+
+function pad_array(x: std_logic_vector; len_pad: natural; fill: std_logic)
+  return std_logic_vector
+is
+  variable tmp : std_logic_vector(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := fill;
+  end loop;
+
+  return tmp;
+end pad_array;
+
+function pad_array(x: std_logic_2d_8; len_pad: natural; fill: std_logic)
+  return std_logic_2d_8
+is
+  variable tmp : std_logic_2d_8(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := (others => fill);
+  end loop;
+
+  return tmp;
+end pad_array;
+
+function pad_array(x: std_logic_2d_10; len_pad: natural; fill: std_logic)
+  return std_logic_2d_10
+is
+  variable tmp : std_logic_2d_10(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := (others => fill);
+  end loop;
+
+  return tmp;
+end pad_array;
+
+function pad_array(x: std_logic_2d_16; len_pad: natural; fill: std_logic)
+  return std_logic_2d_16
+is
+  variable tmp : std_logic_2d_16(x'length+len_pad-1 downto 0);
+begin
+  tmp(x'length-1 downto 0) := x;
+
+  for i in 0 to len_pad-1 loop
+    tmp(x'length+i) := (others => fill);
+  end loop;
+
+  return tmp;
+end pad_array;
 
 end fofb_cc_pkg;

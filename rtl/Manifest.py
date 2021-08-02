@@ -8,6 +8,7 @@ def __dirs():
               "fofb_cc_fa_if_pl",
               "fofb_cc_async_fifo",
               "fofb_cc_fod",
+              "fofb_cc_td_if",
               "fofb_cc_frame_cntrl",
               "fofb_cc_pkg",
               "fofb_cc_rx_fifo",

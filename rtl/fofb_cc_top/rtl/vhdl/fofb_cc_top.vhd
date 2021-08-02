@@ -41,6 +41,9 @@ entity fofb_cc_top is
         INTERLEAVED             : boolean := false;
         -- Use simpler/parallel FA IF or not
         USE_PARALLEL_FA_IF      : boolean := false;
+        -- Use external DCC interface to inject data.
+        -- Overrides FA_IF, all types
+        USE_EXT_CC_IF           : boolean := false;
         -- Extended FAI interface for FOFB
         EXTENDED_CONF_BUF       : boolean := false;
         -- Absolute or Difference position data
@@ -73,13 +76,24 @@ entity fofb_cc_top is
         sysclk_i                : in std_logic;
         sysreset_n_i            : in std_logic;
         -- fast acquisition data interface. Used when USE_PARALLEL_FA_IF = false
+        -- and USE_EXT_CC_IF = false
         fai_fa_block_start_i    : in std_logic := '0';
         fai_fa_data_valid_i     : in std_logic := '0';
         fai_fa_d_i              : in std_logic_vector(FAI_DW-1 downto 0) := (others => '0');
         -- fast acquisition parallel data interface. Used when USE_PARALLEL_FA_IF = true
+        -- and USE_EXT_CC_IF = false
         fai_fa_pl_data_valid_i  : in std_logic := '0';
         fai_fa_pl_d_x_i         : in std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
         fai_fa_pl_d_y_i         : in std_logic_2d_32(BPMS-1 downto 0) := (others => (others => '0'));
+        -- external CC interface for data from another DCC. Used
+        -- when the other DCC is typically in a DISTRIBUTOR mode and
+        -- the other one (using this inteface) is part of another DCC
+        -- network that receives data from both externl GT links and
+        -- DCC. Used when USE_EXT_CC_IF = true. Overrides USE_PARALLEL_FA_IF
+        ext_cc_clk_i            : in std_logic := '0';
+        ext_cc_rst_n_i          : in std_logic := '1';
+        ext_cc_dat_i            : in std_logic_vector((32*PacketSize-1) downto 0) := (others => '0');
+        ext_cc_dat_val_i        : in std_logic := '0';
         -- FOFB communication controller configuration interface
         fai_cfg_a_o             : out std_logic_vector(10 downto 0);
         fai_cfg_d_o             : out std_logic_vector(31 downto 0);
@@ -137,6 +151,8 @@ architecture structural of fofb_cc_top is
 -----------------------------------------
 -- Signal declarations
 
+constant EXTRA_LANE         : natural := tonatural(USE_EXT_CC_IF);
+
 -- chipscope
 signal control              : std_logic_vector(35 downto 0);
 signal data                 : std_logic_vector(255 downto 0);
@@ -150,32 +166,42 @@ signal txf_dout             : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal txf_full             : std_logic_vector(LANE_COUNT-1 downto 0);
 -- rx fifo
 signal rxf_din              : std_logic_2d_16(LANE_COUNT-1 downto 0);
-signal rxf_dout             : std_logic_2d_128(LANE_COUNT-1 downto 0);
+signal rxf_dout             : std_logic_2d_128(LANE_COUNT+EXTRA_LANE-1 downto 0);
 signal rxf_wr_en            : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rxf_rd_en            : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rxf_empty            : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rxf_empty_n          : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rxf_rd_en            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rxf_empty            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rxf_empty_n          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 signal rxf_full             : std_logic_vector(LANE_COUNT-1 downto 0);
+-- external data interface
+signal ext_cc_dout          : std_logic_vector((32*PacketSize-1) downto 0);
+signal ext_cc_dout_val      : std_logic;
+signal ext_cc_dat_rd_en     : std_logic;
+signal ext_cc_dat_empty     : std_logic;
 -- frame status
 signal timeframe_count      : std_logic_vector(31 downto 0) := (others=>'0');
-signal link_partners        : std_logic_2d_10(3 downto 0);
+signal link_partners        : std_logic_2d_10(LANE_COUNT-1 downto 0);
 signal timeframe_dly        : std_logic_vector(15 downto 0);
 -- channel status signals
-signal linkup               : std_logic_vector(7 downto 0);
-signal rx_linkup            : std_logic_vector(3 downto 0);
-signal tx_linkup            : std_logic_vector(3 downto 0);
+signal linkup               : std_logic_vector(2*LANE_COUNT-1 downto 0);
+signal rx_linkup            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal tx_linkup            : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 -- system reset
-signal rx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
-signal tx_fifo_rst          : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rx_fifo_rst          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rx_fifo_rst_n        : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal tx_fifo_rst          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal tx_fifo_rst_n        : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
 -- arbmux module connections
 signal arbmux_dout          : std_logic_vector((32*PacketSize-1) downto 0);
 signal arbmux_dout_rdy      : std_logic;
 -- configuration signals
-signal mgt_powerdown        : std_logic_vector(3 downto 0);
-signal mgt_loopback         : std_logic_vector(7 downto 0);
+signal mgt_powerdown        : std_logic_vector(LANE_COUNT-1 downto 0);
+signal mgt_powerdown_pad    : std_logic_vector(MaxLaneCount-1 downto 0);
+signal mgt_loopback         : std_logic_vector(2*LANE_COUNT-1 downto 0);
+signal mgt_loopback_pad     : std_logic_vector(2*MaxLaneCount-1 downto 0);
 -- time frame start signals
 signal int_timeframe_start  : std_logic := '0';
-signal ext_timeframe_start  : std_logic_vector(3 downto 0);
+signal ext_timeframe_start  : std_logic_vector(LANE_COUNT-1 downto 0);
+signal td_if_timeframe_start : std_logic := '1';
 signal timeframe_start      : std_logic := '0';
 signal timeframe_end        : std_logic;
 signal timeframe_valid      : std_logic;
@@ -183,28 +209,31 @@ signal timeframe_valid      : std_logic;
 signal bpm_cc_xpos          : std_logic_2d_32(BPMS-1 downto 0);
 signal bpm_cc_ypos          : std_logic_2d_32(BPMS-1 downto 0);
 -- status info
-signal rx_max_data_count    : std_logic_2d_8(3 downto 0);
-signal tx_max_data_count    : std_logic_2d_8(3 downto 0);
-signal tx_fsm_busy          : std_logic_vector(LANE_COUNT-1 downto 0);
-signal rx_fsm_busy          : std_logic_vector(LANE_COUNT-1 downto 0);
-signal harderror_cnt        : std_logic_2d_16(3 downto 0);
-signal softerror_cnt        : std_logic_2d_16(3 downto 0);
-signal frameerror_cnt       : std_logic_2d_16(3 downto 0);
-signal rxpck_count          : std_logic_2d_16(3 downto 0);
-signal txpck_count          : std_logic_2d_16(3 downto 0);
+signal rx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
+signal tx_max_data_count    : std_logic_2d_8(LANE_COUNT-1 downto 0);
+signal tx_fsm_busy          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal rx_fsm_busy          : std_logic_vector(LANE_COUNT+EXTRA_LANE-1 downto 0);
+signal harderror_cnt        : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal softerror_cnt        : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal frameerror_cnt       : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal rxpck_count          : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal txpck_count          : std_logic_2d_16(LANE_COUNT-1 downto 0);
 signal bpm_count            : std_logic_vector(7 downto 0);
 signal fodprocess_time      : std_logic_vector(15 downto 0);
-signal link_up_i            : std_logic_vector(7 downto 0);
+signal link_up_i            : std_logic_vector(2*LANE_COUNT-1 downto 0);
 signal golden_orb_x         : std_logic_vector(31 downto 0);
 signal golden_orb_y         : std_logic_vector(31 downto 0);
-signal ext_timeframe_val    : std_logic_2d_16(3 downto 0);
-signal ext_timestamp_val    : std_logic_2d_32(3 downto 0);
+signal ext_timeframe_val    : std_logic_2d_16(LANE_COUNT-1 downto 0);
+signal ext_timestamp_val    : std_logic_2d_32(LANE_COUNT-1 downto 0);
+signal td_if_timeframe_val  : std_logic_vector(15 downto 0);
+signal td_if_timestamp_val  : std_logic_vector(31 downto 0);
 signal timestamp_val        : std_logic_vector(31 downto 0);
 signal bpmid                : std_logic_vector(NodeW-1 downto 0);
 signal timeframelen         : std_logic_vector(15 downto 0);
 
 signal refclk               : std_logic;
 signal sysreset             : std_logic;
+signal sysreset_n           : std_logic;
 signal adcreset             : std_logic;
 signal txoutclk             : std_logic;
 signal plllkdet             : std_logic;
@@ -220,7 +249,8 @@ signal fofb_err_clear       : std_logic;
 
 signal initclk              : std_logic;
 signal initreset            : std_logic;
-signal rxpolarity           : std_logic_vector(3 downto 0);
+signal rxpolarity           : std_logic_vector(LANE_COUNT-1 downto 0);
+signal rxpolarity_pad       : std_logic_vector(MaxLaneCount-1 downto 0);
 signal fai_psel_val         : std_logic_vector(31 downto 0);
 signal fofb_pos_datsel      : std_logic_vector(3 downto 0);
 
@@ -248,9 +278,23 @@ fofb_gtreset_o  <= gtreset;
 ----------------------------------------------
 -- re-arrange rx and tx channel up outputs
 ----------------------------------------------
-rx_linkup <= linkup(7) & linkup(5) & linkup(3) & linkup(1);
-tx_linkup <= linkup(6) & linkup(4) & linkup(2) & linkup(0);
-link_up_i <= tx_linkup & rx_linkup;
+GEN_RX_LINKUP : for i in 0 to LANE_COUNT-1 generate
+
+rx_linkup(i) <= linkup(2*i+1);
+tx_linkup(i) <= linkup(2*i);
+
+end generate;
+
+WITH_EXTRA_LANES_RX_LINKUP : if (USE_EXT_CC_IF = true) generate
+
+-- generate rx_linkup for EXTRA_LANE. As they come
+-- from other DCC just say they are active and use the
+-- "valid" signal to qualify the data.
+rx_linkup(LANE_COUNT-1+EXTRA_LANE) <= '1';
+
+end generate;
+
+link_up_i <= tx_linkup(LANE_COUNT-1 downto 0) & rx_linkup(LANE_COUNT-1 downto 0);
 
 ----------------------------------------------
 -- enable all mgt transceivers on digital board
@@ -272,6 +316,7 @@ fofb_err_clear <= fai_cfg_val_i(2);
 fai_cfg_act_part <= fai_cfg_val_i(0);
 
 sysreset <= mgtreset or not fofb_cc_enable;
+sysreset_n <= not sysreset;
 adcreset <= adcreset_i;
 
 ----------------------------------------------------------------------
@@ -349,7 +394,7 @@ port map (
     plllkdet_o              => plllkdet,
     userclk_i               => userclk,
     userclk_2x_i            => userclk_2x,
-    rxpolarity_i            => rxpolarity(LANE_COUNT-1 downto 0),
+    rxpolarity_i            => rxpolarity,
 
     rxn_i                   => fai_rio_rdn_i,
     rxp_i                   => fai_rio_rdp_i,
@@ -369,8 +414,8 @@ port map (
     frameerror_cnt_o        => frameerror_cnt,
     fofb_err_clear          => fofb_err_clear,
 
-    tx_sm_busy_o            => tx_fsm_busy,
-    rx_sm_busy_o            => rx_fsm_busy,
+    tx_sm_busy_o            => tx_fsm_busy(LANE_COUNT-1 downto 0),
+    rx_sm_busy_o            => rx_fsm_busy(LANE_COUNT-1 downto 0),
 
     tfs_bit_o               => ext_timeframe_start,
     link_partner_o          => link_partners,
@@ -389,11 +434,15 @@ port map (
     rx_dat_val_o            => rxf_wr_en
 );
 
+mgt_powerdown <= mgt_powerdown_pad(LANE_COUNT-1 downto 0);
+mgt_loopback  <= mgt_loopback_pad(2*LANE_COUNT-1 downto 0);
+rxpolarity    <= rxpolarity_pad(LANE_COUNT-1 downto 0);
+
 ----------------------------------------------
 -- fifo reset module. fifos are flushed at the end
 -- of each time rame.
 ----------------------------------------------
-fifo_reset: for N in 0 to (LANE_COUNT - 1) generate
+fifo_reset: for N in 0 to (LANE_COUNT + EXTRA_LANE - 1) generate
 fofb_cc_fifo_rst : entity work.fofb_cc_fifo_rst
 port map(
     mgtclk_i                => userclk,
@@ -407,6 +456,9 @@ port map(
     rxfifo_reset_o          => rx_fifo_rst(N)
 );
 end generate;
+
+tx_fifo_rst_n <= not tx_fifo_rst;
+rx_fifo_rst_n <= not rx_fifo_rst;
 
 ----------------------------------------------
 -- asymetrical rx fifo generation for each mgt channel
@@ -430,13 +482,65 @@ port map (
 );
 end generate;
 
+WITH_EXTRA_LANES_FIFO : if (USE_EXT_CC_IF = true) generate
+
+-- Check if packet belongs to this frame and if it does store in a async
+-- FWFT fifo for arbmux usage
+fofb_cc_td_if : entity work.fofb_cc_td_if
+generic map (
+    FIFO_DATA_WIDTH              => 32*PacketSize,
+    FIFO_SIZE                    => 16,
+    FIFO_ALMOST_EMPTY_THRESHOLD  => 2,
+    FIFO_ALMOST_FULL_THRESHOLD   => 14
+)
+port map(
+    ext_cc_clk_i                 => ext_cc_clk_i,
+    ext_cc_rst_n_i               => ext_cc_rst_n_i,
+    ext_cc_dat_i                 => ext_cc_dat_i,
+    ext_cc_dat_val_i             => ext_cc_dat_val_i,
+
+    timeframe_start_o            => td_if_timeframe_start,
+    timeframe_val_o              => td_if_timeframe_val,
+    timestamp_val_o              => td_if_timestamp_val,
+
+    td_if_clk_i                  => userclk,
+    td_if_rst_n_i                => rx_fifo_rst_n(LANE_COUNT+EXTRA_LANE-1),
+    td_if_data_o                 => ext_cc_dout,
+    td_if_valid_o                => ext_cc_dout_val,
+    td_if_en_i                   => ext_cc_dat_rd_en,
+    td_if_empty_o                => ext_cc_dat_empty
+);
+
+-- generate linkup for EXTRA_LANE. As they come
+-- from other DCC just say they are active and use the
+-- "valid" signal to qualify the data.
+rx_linkup(LANE_COUNT+EXTRA_LANE-1) <= '1';
+tx_linkup(LANE_COUNT+EXTRA_LANE-1) <= '1';
+
+-- generate linkup for EXTRA_LANE. As they come
+-- from other DCC just say they are not busy.
+tx_fsm_busy(LANE_COUNT+EXTRA_LANE-1) <= '0';
+rx_fsm_busy(LANE_COUNT+EXTRA_LANE-1) <= '0';
+
+rxf_dout(LANE_COUNT+EXTRA_LANE-1) <= ext_cc_dout;
+-- we can't use empty, as our flag might be pessimistic, so
+-- the flag will be asserted before the data is actually
+-- valid
+rxf_empty(LANE_COUNT+EXTRA_LANE-1) <= not ext_cc_dout_val;
+
+-- ack receiving current word. Fetch next one if not empty.
+-- FWFT enable
+ext_cc_dat_rd_en <= rxf_rd_en(LANE_COUNT+EXTRA_LANE-1);
+
+end generate;
+
 ----------------------------------------------
 -- cc input buffer arbiter. inputs are connected to
 -- rx fifo.
 ----------------------------------------------
 fofb_cc_arbmux : entity work.fofb_cc_arbmux
 generic map (
-    LaneCount               => LANE_COUNT
+    LaneCount               => LANE_COUNT + EXTRA_LANE
 )
 port map (
     mgt_clk                 => userclk,
@@ -444,7 +548,7 @@ port map (
     data_in                 => rxf_dout,
     data_in_rdy             => rxf_empty_n,
     rx_fifo_rd_en           => rxf_rd_en,
-    channel_up              => rx_linkup(LANE_COUNT-1 downto 0),
+    channel_up              => rx_linkup(LANE_COUNT+EXTRA_LANE-1 downto 0),
     data_out                => arbmux_dout,
     data_out_rdy            => arbmux_dout_rdy,
     timeframe_valid_i       => timeframe_valid
@@ -545,25 +649,25 @@ port map(
     fai_cfg_we_o            => fai_cfg_we_o,
     bpmid_o                 => bpmid,
     timeframe_len_o         => timeframelen,
-    powerdown_o             => mgt_powerdown,
-    loopback_o              => mgt_loopback,
+    powerdown_o             => mgt_powerdown_pad,
+    loopback_o              => mgt_loopback_pad,
     timeframe_dly_o         => timeframe_dly,
-    rxpolarity_o            => rxpolarity,
+    rxpolarity_o            => rxpolarity_pad,
     fai_psel_val_o          => fai_psel_val,
     fofb_dat_sel_o          => fofb_pos_datsel,
     pmc_heart_beat_i        => X"00000000",
-    link_partners_i         => link_partners,
-    link_up_i               => link_up_i,
+    link_partners_i         => pad_array(link_partners, 8-LANE_COUNT, '0'),
+    link_up_i               => pad_array(link_up_i, 2*(8-LANE_COUNT), '0'),
     timeframe_cnt_i         => timeframe_count(15 downto 0),
-    harderror_cnt_i         => harderror_cnt,
-    softerror_cnt_i         => softerror_cnt,
-    frameerror_cnt_i        => frameerror_cnt,
-    rxpck_cnt_i             => rxpck_count,
-    txpck_cnt_i             => txpck_count,
+    harderror_cnt_i         => pad_array(harderror_cnt, 8-LANE_COUNT, '0'),
+    softerror_cnt_i         => pad_array(softerror_cnt, 8-LANE_COUNT, '0'),
+    frameerror_cnt_i        => pad_array(frameerror_cnt, 8-LANE_COUNT, '0'),
+    rxpck_cnt_i             => pad_array(rxpck_count, 8-LANE_COUNT, '0'),
+    txpck_cnt_i             => pad_array(txpck_count, 8-LANE_COUNT, '0'),
     bpmcount_i              => bpm_count,
     fodprocess_time_i       => fodprocess_time,
-    rx_max_data_count_i     => rx_max_data_count,
-    tx_max_data_count_i     => tx_max_data_count,
+    rx_max_data_count_i     => pad_array(rx_max_data_count, 8-LANE_COUNT, '0'),
+    tx_max_data_count_i     => pad_array(tx_max_data_count, 8-LANE_COUNT, '0'),
     coeff_x_addr_i          => coeff_x_addr_i,
     coeff_x_dat_o           => coeff_x_dat_o,
     coeff_y_addr_i          => coeff_y_addr_i,
@@ -572,6 +676,8 @@ port map(
     golden_y_orb_o          => golden_orb_y,
     fai_cfg_val_i           => fai_cfg_val_i
 );
+
+WITH_FA_IF : if (USE_EXT_CC_IF = false) generate
 
 ----------------------------------------------
 -- fa interface module, removed by synthesizer for PMC
@@ -627,12 +733,15 @@ port map(
 
 end generate;
 
+end generate; -- USE_EXT_CC_IF = false
+
 ----------------------------------------------
 -- Control module for tfs inputs from libera and mgts
 ----------------------------------------------
 fofb_cc_frame_cntrl : entity work.fofb_cc_frame_cntrl
 generic map (
     DEVICE                  => DEVICE,
+    USE_EXT_CC_IF           => USE_EXT_CC_IF,
     LaneCount               => LANE_COUNT
 )
 port map(
@@ -640,6 +749,7 @@ port map(
     mgtreset_i              => sysreset,
     tfs_bpm_i               => int_timeframe_start,
     tfs_pmc_i               => ext_timeframe_start,
+    tfs_td_if_i             => td_if_timeframe_start,
     tfs_override_i          => fofb_tfs_override,
     timeframe_len_i         => timeframelen,
     timeframe_valid_o       => timeframe_valid,
@@ -647,6 +757,8 @@ port map(
     timeframe_end_o         => timeframe_end,
     pmc_timeframe_cntr_i    => ext_timeframe_val,
     pmc_timestamp_val_i     => ext_timestamp_val,
+    td_if_timeframe_cntr_i  => td_if_timeframe_val,
+    td_if_timestamp_val_i   => td_if_timestamp_val,
     timeframe_cntr_o        => timeframe_count,
     timestamp_value_o       => timestamp_val
 );
