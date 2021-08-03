@@ -138,7 +138,6 @@ begin
         if (mgtreset_i = '1') then
             pmc_timeframe_val  <= (others => '0');
             td_if_timeframe_val <= (others => '0');
-            timestamp_value_o <= (others => '0');
         else
             if (timeframe_state = idle) then
                 pmc_timeframe_val  <= pmc_timeframe_cntr_i(to_integer(unsigned(onehot_decode(tfs_pmc_i, tfs_pmc_i'length))));
