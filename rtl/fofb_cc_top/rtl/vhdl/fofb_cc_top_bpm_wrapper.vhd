@@ -35,6 +35,7 @@ entity fofb_cc_top_wrapper is
         rcb_dat_o               : out std_logic_vector(31 downto 0);
         fai_rxfifo_clear        : in  std_logic;
         fai_txfifo_clear        : in  std_logic;
+        fofb_cc_enable_o        : out std_logic;
        -- serial I/Os for eight RocketIOs on the Libera
         fai_rio_rdp_i           : in  std_logic_vector(3 downto 0);
         fai_rio_rdn_i           : in  std_logic_vector(3 downto 0);
@@ -95,6 +96,7 @@ i_fofb_cc_top : entity work.fofb_cc_top
         fofb_rxlink_up_o        => open,
         fofb_rxlink_partner_o   => open,
         fofb_timestamp_val_o    => open,
+        fofb_cc_enable_o        => fofb_cc_enable_o,
         harderror_cnt_o         => open,
         softerror_cnt_o         => open,
         frameerror_cnt_o        => open,

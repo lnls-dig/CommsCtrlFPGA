@@ -141,6 +141,7 @@ entity fofb_cc_top is
         fofb_node_mask_o        : out std_logic_vector(NodeNum-1 downto 0);
         fofb_timestamp_val_o    : out std_logic_vector(31 downto 0);
         fofb_link_status_o      : out std_logic_vector(31 downto 0);
+        fofb_cc_enable_o        : out std_logic;
         fofb_fod_dat_o          : out std_logic_vector((32*PacketSize-1) downto 0);
         fofb_fod_dat_val_o      : out std_logic_vector(LANE_COUNT-1 downto 0)
 );
@@ -318,6 +319,8 @@ fai_cfg_act_part <= fai_cfg_val_i(0);
 sysreset <= mgtreset or not fofb_cc_enable;
 sysreset_n <= not sysreset;
 adcreset <= adcreset_i;
+
+fofb_cc_enable_o <= fofb_cc_enable;
 
 ----------------------------------------------------------------------
 -- MGT reference clocks, user clocks and reset interface
