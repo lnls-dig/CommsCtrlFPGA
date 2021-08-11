@@ -254,6 +254,7 @@ signal rxpolarity           : std_logic_vector(LANE_COUNT-1 downto 0);
 signal rxpolarity_pad       : std_logic_vector(MaxLaneCount-1 downto 0);
 signal fai_psel_val         : std_logic_vector(31 downto 0);
 signal fofb_pos_datsel      : std_logic_vector(3 downto 0);
+signal fofb_link_status     : std_logic_vector(31 downto 0) := (others => '0');
 
 begin
 
@@ -263,7 +264,11 @@ begin
 fofb_process_time_o   <= fodprocess_time;
 fofb_bpm_count_o      <= bpm_count;
 fofb_timestamp_val_o  <= timestamp_val;
-fofb_link_status_o <= X"00" & "000000"& link_partners(1) & "0000000" & rx_linkup(1);
+
+fofb_link_status(16+link_partners(0)'length-1 downto 16) <= link_partners(0);
+fofb_link_status(rx_linkup'length-1 downto 0) <= rx_linkup;
+
+fofb_link_status_o <= fofb_link_status;
 
 fai_cfg_clk_o <= userclk;
 
