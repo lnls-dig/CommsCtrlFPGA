@@ -106,6 +106,12 @@ constant def_PacketTimeframeCntr16LSB : natural := 112;
 constant def_PacketIDMSB : natural := NodeW+95;
 constant def_PacketIDLSB : natural := 96;
 
+constant def_PacketDataXMSB : natural := 95;
+constant def_PacketDataXLSB : natural := 64;
+
+constant def_PacketDataYMSB : natural := 63;
+constant def_PacketDataYLSB : natural := 32;
+
 constant def_PacketTimeStampMSB : natural := 31;
 constant def_PacketTimeStampLSB : natural := 0;
 
