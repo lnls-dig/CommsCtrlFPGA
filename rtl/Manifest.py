@@ -32,12 +32,6 @@ def __dirs():
     else:
         import sys
         sys.exit("ERROR: MGT: Target/Device not supported: {}/{}".format(target, syn_device))
-
-    # Select Chipscope implementation based on FPGa family. Probably family
-    # independent?
-    if (target == "xilinx" and syn_device[0:3].upper()=="XC7"):
-        dirs.extend(["chipscope/7series"]);
-
     return dirs
 
 modules = {
