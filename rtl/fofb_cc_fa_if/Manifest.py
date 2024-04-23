@@ -7,8 +7,9 @@ import sys
 if (target == "xilinx"):
     if(syn_device[0:4].upper()=="XC7A"):
         if (action == "simulation"):
-            files.extend(["coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32_sim_netlist.vhdl"]);
-            files.extend(["coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32_sim_netlist.vhdl"]);
+            if (sim_tool != "ghdl" and sim_tool != "nvc"):
+                files.extend(["coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32_sim_netlist.vhdl"]);
+                files.extend(["coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32_sim_netlist.vhdl"]);
         elif (action == "synthesis"):
             files.extend(["coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32.xci"]);
             files.extend(["coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32.xci"]);

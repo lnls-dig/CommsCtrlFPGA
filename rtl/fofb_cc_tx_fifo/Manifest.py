@@ -14,7 +14,8 @@ elif (target == "xilinx" and syn_device[0:4].upper()=="XC2V"):
     files.extend(["coregen/virtex2pro/fofb_cc_tx_fifo.vhd"]);
 elif (target == "xilinx" and syn_device[0:4].upper()=="XC7A"):
     if (action == "simulation"):
-        files.extend(["coregen/artix7/fofb_cc_tx_fifo_sim_netlist.vhdl"]);
+        if (sim_tool != "ghdl" and sim_tool != "nvc"):
+            files.extend(["coregen/artix7/fofb_cc_tx_fifo_sim_netlist.vhdl"]);
     elif (action == "synthesis"):
         files.extend(["coregen/artix7/fofb_cc_tx_fifo.xci"]);
     else:
