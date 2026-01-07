@@ -11,8 +11,8 @@ if (target == "xilinx"):
                 files.extend(["coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32_sim_netlist.vhdl"]);
                 files.extend(["coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32_sim_netlist.vhdl"]);
         elif (action == "synthesis"):
-            files.extend(["coregen/artix7/fofb_cc_fa_if_bram_16_to_32/fofb_cc_fa_if_bram_16_to_32.xci"]);
-            files.extend(["coregen/artix7/fofb_cc_fa_if_bram_32_to_32/fofb_cc_fa_if_bram_32_to_32.xci"]);
+            files.extend(["fofb_cc_fa_if_bram_16_to_32.tcl"]);
+            files.extend(["fofb_cc_fa_if_bram_32_to_32.tcl"]);
         else:
             sys.exit("ERROR: fofb_cc_fa_if: Action not supported: {}".format(action))
 
